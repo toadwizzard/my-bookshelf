@@ -1,1 +1,15 @@
 /* You can add global styles to this file, and also import other style files */
+:root {
+  --app-white: white;
+  --background-color: rgb(243, 223, 167);
+  --background-lighter: rgb(250, 235, 194);
+  --background-darker: rgb(236, 215, 156);
+  --background-hover: white;
+  --accent-color: rgb(95, 25, 25);
+  --accent-hover: rgb(146, 62, 62);
+}
+
+body {
+  margin: 0px;
+  background-color: var(--background-color);
+}

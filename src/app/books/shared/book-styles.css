@@ -1,0 +1,91 @@
+.bookshelf-container {
+  width: 75%;
+  margin: 2rem auto;
+}
+
+.form-container {
+  width: 35%;
+  padding: 1rem;
+  margin-bottom: 1rem;
+  border: 2px solid var(--accent-color);
+  color: var(--accent-color);
+}
+
+.form-container p {
+  margin-top: 0;
+  margin-bottom: 0;
+  font-weight: bold;
+  font-size: large;
+  cursor: pointer;
+  user-select: none;
+}
+
+form div {
+  display: flex;
+  justify-content: space-between;
+  margin: 0.5rem 0;
+}
+
+form button {
+  background-color: var(--accent-color);
+  cursor: pointer;
+  color: var(--app-white);
+  border: 2px outset var(--accent-color);
+  border-radius: 15px;
+  display: block;
+  padding: 0.5rem 1rem;
+  margin: 1rem auto 0;
+}
+
+form button:hover {
+  background-color: var(--accent-hover);
+}
+
+.bookshelf {
+  border-collapse: collapse;
+  width: 100%;
+  border: 2px solid var(--accent-color);
+}
+
+.bookshelf thead {
+  background-color: var(--accent-color);
+  border: 1px solid var(--accent-color);
+}
+
+.bookshelf th {
+  padding: 0.5rem;
+  color: var(--app-white);
+}
+
+.bookshelf td {
+  border: 1px solid var(--accent-color);
+  padding: 0.5rem;
+  color: var(--accent-color);
+}
+
+.bookshelf tbody tr:nth-child(even) {
+  background-color: var(--background-lighter);
+}
+
+.bookshelf tbody tr:nth-child(odd) {
+  background-color: var(--background-darker);
+}
+
+.bookshelf tbody tr:hover {
+  background-color: var(--background-hover);
+}
+
+.orderable {
+  cursor: pointer;
+  user-select: none;
+}
+.orderAscend {
+  background-color: black;
+}
+.orderDescend {
+  background-color: blue;
+}
+
+.hidden {
+  display: none;
+}
