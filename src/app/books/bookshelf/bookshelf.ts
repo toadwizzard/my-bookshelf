@@ -10,8 +10,14 @@ import { FormControl, FormGroup, ReactiveFormsModule } from '@angular/forms';
   template: `
     <div class="bookshelf-container">
       <div class="form-container">
-        <p class="filterTitle" (click)="toggleForm()">Filter</p>
-        <form [formGroup]="filterForm" (submit)="filterByOwnerAndTitle()" [ngClass]="{hidden: !formVisible}">
+        <p class="filterTitle" [ngClass]="{open: formVisible}" (click)="toggleForm()">Filter</p>
+        <form [formGroup]="filterForm" (submit)="filterBooks()" [ngClass]="{hidden: !formVisible}">
+          <div class="checkboxes">
+            <input type="checkbox" id="onShelf" formControlName="onShelf"><label for="onShelf">Books on shelf</label><br>
+            <input type="checkbox" id="lent" formControlName="lent"><label for="lent">Lent books</label><br>
+            <input type="checkbox" id="borrowed" formControlName="borrowed"><label for="borrowed">Borrowed books</label><br>
+            <input type="checkbox" id="libraryBooks" formControlName="libraryBooks"><label for="libraryBooks">Borrowed from library</label>
+          </div>
           <div>
             <label for="owner">Owner:</label>
             <input type="text" placeholder="Filter by owner" name="owner" formControlName="owner">
@@ -20,22 +26,25 @@ import { FormControl, FormGroup, ReactiveFormsModule } from '@angular/forms';
             <label for="title">Title:</label>
             <input type="text" placeholder="Filter by title" name="title" formControlName="title">
           </div>
-          <button type="submit">Filter</button>
+          <div class="buttons">
+            <button type="submit">Filter</button>
+            <button (click)="clearFilter()">Clear</button>
+          </div>
         </form>
       </div>
       <table class="bookshelf">
         <thead>
           <tr>
-            <th class="orderable" tabindex=0 [ngClass]="{
+            <th class="orderable owner" [ngClass]="{
               orderAscend: orderedByOwner,
               orderDescend: orderedByOwner === false
             }" (click)="orderByOwner()">Owner</th>
-            <th class="orderable" tabindex=0 [ngClass]="{
+            <th class="orderable title" [ngClass]="{
               orderAscend: orderedByTitle,
               orderDescend: orderedByTitle === false
             }" (click)="orderByTitle()">Title</th>
-            <th>Status</th>
-            <th>Actions</th>
+            <th class="status">Status</th>
+            <th class="actions">Actions</th>
           </tr>
         </thead>
         <tbody>
@@ -51,7 +60,20 @@ import { FormControl, FormGroup, ReactiveFormsModule } from '@angular/forms';
       </table>
     </div>
   `,
-  styles: ``,
+  styles: `
+    .owner {
+      width: 20%;
+    }
+    .title {
+      width: 30%;
+    }
+    .status {
+      width: 35%;
+    }
+    .actions {
+      width: 10%;
+    }
+  `,
   styleUrl: "../shared/book-styles.css",
 })
 export class Bookshelf {
@@ -63,7 +85,11 @@ export class Bookshelf {
   orderedByTitle: true | false | undefined;
   filterForm = new FormGroup({
     owner: new FormControl(''),
-    title: new FormControl('')
+    title: new FormControl(''),
+    onShelf: new FormControl(),
+    lent: new FormControl(),
+    borrowed: new FormControl(),
+    libraryBooks: new FormControl(),
   });
   formVisible: boolean = false;
 
@@ -105,32 +131,68 @@ export class Bookshelf {
   orderByOwner(){
     this.orderedByTitle = undefined;
     this.orderedByOwner = !this.orderedByOwner;
-    const ordered = this.books.toSorted((a, b) =>
-      this.getOwnerNameFromBook(a).localeCompare(this.getOwnerNameFromBook(b))
+    this.orderedBooks = this.books.toSorted((a, b) =>
+      this.orderedByOwner ?
+      this.getOwnerNameFromBook(a).localeCompare(this.getOwnerNameFromBook(b)) :
+      this.getOwnerNameFromBook(b).localeCompare(this.getOwnerNameFromBook(a))
     );
-    this.orderedBooks = this.orderedByOwner ? ordered : ordered.reverse()
-    this.filterByOwnerAndTitle();
+    this.filterBooks();
   }
 
   orderByTitle(){
     this.orderedByOwner = undefined;
     this.orderedByTitle = !this.orderedByTitle;
-    const ordered = this.books.toSorted((a, b) => a.title.localeCompare(b.title));
-    this.orderedBooks = this.orderedByTitle ? ordered : ordered.reverse();
-    this.filterByOwnerAndTitle();
+    this.orderedBooks = this.books.toSorted((a, b) =>
+      this.orderedByTitle ? a.title.localeCompare(b.title) : b.title.localeCompare(a.title)
+    );
+    this.filterBooks();
   }
 
   toggleForm(){
     this.formVisible = !this.formVisible;
   }
 
-  filterByOwnerAndTitle(){
+  filterBooks(){
     this.filteredBooks = this.orderedBooks.filter(book =>
-      (!this.filterForm.value.owner ||
-      this.getOwnerNameFromBook(book).toLowerCase().includes(this.filterForm.value.owner))
-      &&
-      (!this.filterForm.value.title ||
-      book.title.toLowerCase().includes(this.filterForm.value.title))
+    (!this.hasCheck() ||
+      (this.isOnShelf(book) || this.isLent(book) || this.isBorrowed(book) || this.isLibraryBook(book)))
+      && this.ownerMatches(book) && this.titleMatches(book)
     )
+  }
+
+  private hasCheck(): boolean {
+    return this.filterForm.value.onShelf ||
+      this.filterForm.value.lent ||
+      this.filterForm.value.borrowed ||
+      this.filterForm.value.libraryBooks;
+  }
+
+  private isOnShelf(book: BookInfo): boolean {
+    return this.filterForm.value.onShelf && book.status === BookStatus.Default;
+  }
+
+  private isLent(book: BookInfo): boolean {
+    return this.filterForm.value.lent && book.status === BookStatus.Lent;
+  }
+
+  private isBorrowed(book: BookInfo): boolean {
+    return this.filterForm.value.borrowed && book.status === BookStatus.Borrowed;
+  }
+
+  private isLibraryBook(book: BookInfo): boolean {
+    return this.filterForm.value.libraryBooks && book.status === BookStatus.LibraryBorrowed;
+  }
+
+  private ownerMatches(book: BookInfo): boolean {
+    return !this.filterForm.value.owner ||
+      this.getOwnerNameFromBook(book).toLowerCase().includes(this.filterForm.value.owner);
+  }
+
+  private titleMatches(book: BookInfo): boolean {
+    return !this.filterForm.value.title || book.title.toLowerCase().includes(this.filterForm.value.title);
+  }
+
+  clearFilter(){
+    this.filterForm.reset();
   }
 }

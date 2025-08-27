@@ -4,6 +4,10 @@ nav {
   display: flex;
   column-gap: 1.5rem;
   align-items: center;
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
 }
 
 nav a {
@@ -17,10 +21,14 @@ nav a:hover {
 }
 
 nav a.title {
-  font-size: xx-large;
+  font-size: 2rem;
   font-weight: bolder;
 }
 
 nav a.title:hover, nav a.title:focus {
   transform: none;
+}
+
+main {
+  padding-top: 4.3rem;
 }
