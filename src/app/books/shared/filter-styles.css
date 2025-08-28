@@ -1,0 +1,52 @@
+.form-container {
+  width: 250px;
+  padding: 1rem;
+  margin-bottom: 1rem;
+  border: 2px solid var(--accent-color);
+  border-radius: 5px;
+  color: var(--accent-color);
+  background-color: var(--background-lighter);
+}
+
+.form-container p {
+  margin-top: 0;
+  margin-bottom: 0;
+  font-weight: bold;
+  font-size: large;
+  cursor: pointer;
+  user-select: none;
+}
+
+.form-container p::before {
+  content: "\25B6  "
+}
+
+.form-container p.open::before {
+  content: "\25BC  "
+}
+
+form div.checkboxes {
+  margin: 0.5rem 0 1rem;
+  display: block;
+}
+input[type="checkbox"] {
+  margin-left: 0;
+  margin-right: 5px;
+}
+
+form div {
+  display: flex;
+  justify-content: space-between;
+  margin: 0.5rem 0;
+}
+
+form div.buttons {
+  display: flex;
+  justify-content: center;
+  column-gap: 1rem;
+  margin-top: 1rem;
+}
+
+.hidden {
+  display: none;
+}

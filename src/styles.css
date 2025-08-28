@@ -1,4 +1,6 @@
 /* You can add global styles to this file, and also import other style files */
+@import '@angular/cdk/overlay-prebuilt.css';
+
 :root {
   --app-white: white;
   --background-color: rgb(243, 223, 167);
@@ -7,9 +9,64 @@
   --background-hover: white;
   --accent-color: rgb(95, 25, 25);
   --accent-hover: rgb(146, 62, 62);
+  --accent-grey: rgb(126, 93, 93);
 }
 
 body {
   margin: 0px;
   background-color: var(--background-color);
+}
+
+button.base-button {
+  background-color: var(--accent-color);
+  cursor: pointer;
+  color: var(--app-white);
+  border: 2px outset var(--accent-color);
+  border-radius: 15px;
+  display: block;
+  padding: 0.5rem 1rem;
+  margin: 0;
+}
+
+button.base-button:hover {
+  background-color: var(--accent-hover);
+}
+
+button.base-button:disabled {
+  background-color: var(--accent-grey);
+  border-color: var(--accent-grey);
+  border-style: solid;
+  cursor: not-allowed;
+}
+
+.dialog {
+  display: block;
+  background-color: var(--background-color);
+  border: 2px solid var(--accent-color);
+  border-radius: 5px;
+  padding: 1rem;
+  position: relative;
+  color: var(--accent-color);
+}
+
+.dialog button.close {
+  width: auto;
+  height: 2rem;
+  aspect-ratio: 1/1;
+  padding: 0.5rem;
+  background: none;
+  border: none;
+  border-radius: 100%;
+
+  color: var(--accent-color);
+  font-weight: bolder;
+  cursor: pointer;
+
+  position: absolute;
+  right: 0.5rem;
+  top: 0.5rem;
+}
+
+.dialog button.close:hover {
+  background-color: var(--background-hover);
 }

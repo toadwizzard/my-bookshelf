@@ -1,7 +1,7 @@
 import { Routes } from '@angular/router';
 import { Bookshelf } from './books/bookshelf/bookshelf';
 import { Wishlist } from './books/wishlist/wishlist';
-import { Profile } from './profile/profile';
+import { Profile } from './user/profile/profile';
 
 export const routes: Routes = [
   {

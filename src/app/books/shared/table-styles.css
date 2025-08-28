@@ -1,0 +1,44 @@
+.bookshelf {
+  border-collapse: collapse;
+  width: 100%;
+  border: 2px solid var(--accent-color);
+}
+
+.bookshelf thead {
+  background-color: var(--accent-color);
+  border: 1px solid var(--accent-color);
+}
+
+.bookshelf th {
+  padding: 0.5rem;
+  color: var(--app-white);
+}
+
+.bookshelf td {
+  border: 1px solid var(--accent-color);
+  padding: 0.5rem;
+  color: var(--accent-color);
+}
+
+.bookshelf tbody tr:nth-child(even) {
+  background-color: var(--background-lighter);
+}
+
+.bookshelf tbody tr:nth-child(odd) {
+  background-color: var(--background-darker);
+}
+
+.bookshelf tbody tr:hover {
+  background-color: var(--background-hover);
+}
+
+.orderable {
+  cursor: pointer;
+  user-select: none;
+}
+.orderAscend::after {
+  content: " \25BC";
+}
+.orderDescend::after {
+  content: " \25B2";
+}

@@ -7,9 +7,9 @@ export enum BookStatus {
 }
 
 export interface BookInfo {
-  id: number,
+  id?: number,
   title: string,
-  otherName: string | undefined,
+  otherName: string | undefined | null,
   status: BookStatus,
-  date: Date | undefined,
+  date: Date | undefined | null,
 }

@@ -1,0 +1,22 @@
+div.input-container {
+  display: flex;
+  justify-content: space-between;
+  margin: 0.5rem;
+}
+
+button[type="submit"] {
+  margin: 1rem auto 0;
+}
+
+input, select {
+  box-sizing: border-box;
+  width: 160px;
+}
+
+input.ng-invalid.ng-touched {
+  border: 2px solid red;
+}
+
+.hidden {
+  display: none;
+}

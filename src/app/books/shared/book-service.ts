@@ -167,6 +167,17 @@ export class BookService {
       }));
   };
 
+  getWishlistedBooks(userId: number): BookInfo[] {
+    return books.filter(book => book.ownerId === userId && book.status === BookStatus.Wishlist)
+      .map(book => ({
+        id: book.id,
+        title: book.title,
+        otherName: book.otherName,
+        status: book.status,
+        date: book.date
+      }));
+  }
+
   getBookById(userId: number, bookId: number): BookInfo | undefined {
     let book: BookInfoWithId | undefined =
       books.find(book => book.id === bookId && book.ownerId === userId);
@@ -177,5 +188,30 @@ export class BookService {
       status: book.status,
       date: book.date
     } : undefined
+  }
+
+  private getLargestBookId(): number {
+    return books.reduce((acc, cur) => {
+      if(acc.id === undefined)
+        return cur;
+      else if (cur.id === undefined)
+        return acc;
+      else return acc.id < cur.id ? cur : acc;
+    }).id ?? 1;
+  }
+
+  addBook(userId: number, book: BookInfo): BookInfo {
+    const newBook = {
+      id: this.getLargestBookId() + 1,
+      title: book.title,
+      otherName: book.otherName,
+      status: book.status,
+      date: book.date
+    };
+    books.push({
+      ...newBook,
+      ownerId: userId
+    });
+    return newBook;
   }
 }
