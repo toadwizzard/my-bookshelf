@@ -111,7 +111,6 @@ export class BookshelfFormDialog {
   }
 
   cancel(){
-    this.bookForm.reset();
     this.dialogRef.close();
   }
 
@@ -125,15 +124,13 @@ export class BookshelfFormDialog {
         otherName = this.bookForm.value.otherName;
         date = this.bookForm.value.sinceDueDate;
       }
-      const newBook = {
+      this.dialogRef.close({
         id: -1,
         title: this.bookForm.getRawValue().title ?? "",
         otherName: otherName,
         status: this.bookForm.getRawValue().owner ?? BookStatus.Default,
         date: date ? new Date(date) : undefined,
-      };
-      this.bookForm.reset();
-      this.dialogRef.close(newBook);
+      });
     }
   }
 }

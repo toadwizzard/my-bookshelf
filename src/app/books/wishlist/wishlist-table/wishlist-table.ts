@@ -1,4 +1,4 @@
-import { Component, computed, input, signal } from '@angular/core';
+import { Component, computed, input, output, signal } from '@angular/core';
 import { BookInfo } from '../../shared/book-info';
 import { NgClass } from '@angular/common';
 
@@ -20,7 +20,19 @@ import { NgClass } from '@angular/common';
         @for (book of orderedBooks(); track $index) {
           <tr>
             <td>{{book.title}}</td>
-            <td>actions</td>
+            <td>
+              <div class="action-button-container">
+                <button title="To owned" class="base-button icon-button green" (click)="addBookToOwned(book.id)">
+                  <span class="material-icons">input</span>
+                </button>
+                <button title="Edit" class="base-button icon-button" (click)="editBook(book.id)">
+                  <span class="material-icons">edit</span>
+                </button>
+                <button title="Remove" class="base-button icon-button red" (click)="deleteBook(book.id)">
+                  <span class="material-icons">delete</span>
+                </button>
+              </div>
+            </td>
           </tr>
         }
       </tbody>
@@ -28,10 +40,10 @@ import { NgClass } from '@angular/common';
   `,
   styles: `
     .title {
-      width: 90%;
+      width: 85%;
     }
     .actions {
-      width: 10%;
+      width: 15%;
     }
   `,
   styleUrl: `../../shared/table-styles.css`,
@@ -44,6 +56,9 @@ export class WishlistTable {
       return this.getOrderByTitle();
     return this.books();
   })
+  delete = output<number>();
+  edit = output<number>();
+  addToOwned = output<number>();
 
   orderByTitle(){
     this.orderedByTitleAsc.set(!this.orderedByTitleAsc());
@@ -53,5 +68,17 @@ export class WishlistTable {
     return this.books().toSorted((a, b) =>
       this.orderedByTitleAsc() ? a.title.localeCompare(b.title) : b.title.localeCompare(a.title)
     );
+  }
+
+  deleteBook(id: number) {
+    this.delete.emit(id);
+  }
+
+  editBook(id: number) {
+    this.edit.emit(id);
+  }
+
+  addBookToOwned(id: number) {
+    this.addToOwned.emit(id);
   }
 }
