@@ -42,3 +42,13 @@
 .orderDescend::after {
   content: " \25B2";
 }
+
+button.icon-button span {
+  font-size: 18px;
+}
+
+div.action-button-container {
+  display: flex;
+  column-gap: 0.5rem;
+  justify-content: center;
+}

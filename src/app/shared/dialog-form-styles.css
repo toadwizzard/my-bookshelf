@@ -5,12 +5,17 @@ div.input-container {
 }
 
 button[type="submit"] {
+  display: block;
   margin: 1rem auto 0;
 }
 
 input, select {
   box-sizing: border-box;
   width: 160px;
+}
+
+input:disabled, select:disabled {
+  cursor: not-allowed;
 }
 
 input.ng-invalid.ng-touched {

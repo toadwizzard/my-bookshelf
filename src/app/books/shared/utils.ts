@@ -1,4 +1,8 @@
+import { formatDate } from "@angular/common";
 import { BookInfo, BookStatus } from "./book-info";
+
+const dateFormat = "y. MM. dd.";
+const locale = "en-US";
 
 export function getOwnerNameFromBook(book: BookInfo): string {
   if(book.status === BookStatus.Default || book.status === BookStatus.Lent)
@@ -13,18 +17,12 @@ export function getOwnerNameFromBook(book: BookInfo): string {
 export function getStatusFromBook(book: BookInfo): string {
   if(book.status === BookStatus.Lent)
     return "Lent" + (book.otherName ? ` to ${book.otherName}` : "")
-    + (book.date ? ` on ${formatDate(book.date)}` : "");
+    + (book.date ? ` on ${formatDate(book.date, dateFormat, locale)}` : "");
   if(book.status === BookStatus.Borrowed)
-    return "Borrowed" + (book.date ? ` on ${formatDate(book.date)}` : "");
+    return "Borrowed" + (book.date ? ` on ${formatDate(book.date, dateFormat, locale)}` : "");
   if(book.status === BookStatus.LibraryBorrowed)
-    return "Borrowed" + (book.date ? ` (due ${formatDate(book.date)})` : "");
+    return "Borrowed" + (book.date ? ` (due ${formatDate(book.date, dateFormat, locale)})` : "");
   return "";
-}
-
-export function formatDate(date: Date): string {
-  return date.getFullYear().toString() + ". "
-    + date.getMonth().toString().padStart(2, "0") + ". "
-    + date.getDate().toString().padStart(2, "0") + ".";
 }
 
 export function stringMatches(searchString: string, searchToken: string): boolean {

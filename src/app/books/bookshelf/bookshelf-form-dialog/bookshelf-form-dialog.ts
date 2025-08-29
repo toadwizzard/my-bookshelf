@@ -1,7 +1,8 @@
-import { DialogRef } from '@angular/cdk/dialog';
+import { DIALOG_DATA, DialogRef } from '@angular/cdk/dialog';
 import { Component, inject } from '@angular/core';
 import { BookInfo, BookStatus } from '../../shared/book-info';
 import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
+import { formatDate } from '@angular/common';
 
 @Component({
   selector: 'app-bookshelf-form-dialog',
@@ -11,45 +12,53 @@ import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angula
   },
   template: `
     <button (click)="cancel()" class="close">X</button>
-    <h2>Add new book</h2>
+    <h2>{{isLend ? "Lend book" : (isEditing ? "Edit book" : "Add new book")}}</h2>
     <form [formGroup]="bookForm" (submit)="submitForm()">
       <div class="input-container">
         <label for="title">Title:</label>
         <input type="text" id="title" formControlName="title" placeholder="Title">
       </div>
       <div class="input-container">
-        <label for="owner">Add to:</label>
+        <label for="owner">{{isEditing ? "Status" : "Add to:"}}</label>
         <select id="owner" formControlName="owner">
           @for (owner of ownerOptions; track $index){
             <option [ngValue]="owner.value">{{owner.text}}</option>
+          }
+          @if (isEditing) {
+            <option [ngValue]="lentStatus">Lent</option>
           }
         </select>
       </div>
       @if(!ownerMe){
         <div>
           <div class="input-container">
-            <label for="ownerName">Owner name (optional):</label>
-            <input type="text" id="ownerName" formControlName="ownerName" placeholder="Owner name">
+            <label for="otherName">{{isLent ? "Lent to" : "Owner name"}} (optional):</label>
+            <input type="text" id="otherName" formControlName="otherName"
+              [placeholder]="isLent ? 'Lent to' : 'Owner name'">
           </div>
           <div class="input-container">
-            <label for="sinceDueDate">{{isDue ? "Due" : "Borrowed on"}} (optional):</label>
+            <label for="sinceDueDate">{{isLent ? "Lent on" : (isDue ? "Due" : "Borrowed on")}} (optional):</label>
             <input type="date" id="sinceDueDate" formControlName="sinceDueDate">
           </div>
         </div>
       }
-      <button class="base-button" type="submit" (click)="submitForm()" [disabled]="!bookForm.valid">Add book</button>
+      <button class="base-button" type="submit" (click)="submitForm()" [disabled]="!bookForm.valid">
+        {{isLend ? "Lend" : (isEditing ? "Edit" : "Add")}}
+      </button>
     </form>
   `,
   styleUrl: `../../../shared/dialog-form-styles.css`,
 })
 export class BookshelfFormDialog {
   dialogRef = inject<DialogRef<BookInfo>>(DialogRef<BookInfo>);
+  data = inject<{book: BookInfo, isLend: boolean} | undefined>(DIALOG_DATA);
 
   bookForm = new FormGroup({
     title: new FormControl<string>('', [Validators.required]),
-    owner: new FormControl<BookStatus.Default | BookStatus.Borrowed | BookStatus.LibraryBorrowed>(BookStatus.Default),
-    ownerName: new FormControl<string>(''),
-    sinceDueDate: new FormControl<Date | undefined>(undefined),
+    owner: new FormControl<BookStatus.Default | BookStatus.Borrowed |
+      BookStatus.LibraryBorrowed | BookStatus.Lent>(BookStatus.Default),
+    otherName: new FormControl<string>(''),
+    sinceDueDate: new FormControl<string>(""),
   });
   ownerOptions = [
     {
@@ -63,16 +72,42 @@ export class BookshelfFormDialog {
     {
       value: BookStatus.LibraryBorrowed,
       text: "Borrowed from library"
-    }
+    },
   ];
-  ownerMe: boolean = this.bookForm.value.owner === BookStatus.Default;
-  isDue: boolean = this.bookForm.value.owner === BookStatus.LibraryBorrowed;
+  isEditing: boolean = false;
+  isLend: boolean = false;
+
+  get ownerMe(): boolean{
+    return this.bookForm.value.owner === BookStatus.Default;
+  }
+  get isDue(): boolean {
+    return this.bookForm.value.owner === BookStatus.LibraryBorrowed;
+  }
+  get isLent(): boolean {
+    return this.bookForm.value.owner === BookStatus.Lent;
+  }
+
+  get lentStatus(){
+    return BookStatus.Lent;
+  }
 
   constructor() {
-    this.bookForm.get('owner')?.valueChanges.subscribe(value => {
-      this.ownerMe = value === BookStatus.Default;
-      this.isDue = value === BookStatus.LibraryBorrowed;
-    })
+    this.isEditing = !!this.data;
+    this.isLend = !!this.data?.isLend;
+    if(!!this.data){
+      const book: BookInfo = this.data.book;
+      this.bookForm.patchValue({
+        title: book.title,
+        owner: this.isLend ? BookStatus.Lent :
+          book.status === BookStatus.Wishlist ? BookStatus.Default : book.status,
+        otherName: book.otherName,
+        sinceDueDate: book.date ? formatDate(book.date, "y-MM-dd", "en-US") : ""
+      });
+      if(this.isLend){
+        this.bookForm.get('title')?.disable();
+        this.bookForm.get('owner')?.disable();
+      }
+    }
   }
 
   cancel(){
@@ -82,14 +117,21 @@ export class BookshelfFormDialog {
 
   submitForm(){
     if(this.bookForm.valid){
+      let otherName, date;
+      if(this.bookForm.value.owner === BookStatus.Default || !this.bookForm.value.owner){
+        otherName = undefined;
+        date = undefined;
+      } else {
+        otherName = this.bookForm.value.otherName;
+        date = this.bookForm.value.sinceDueDate;
+      }
       const newBook = {
-        title: this.bookForm.value.title ?? "",
-        otherName: this.bookForm.value.ownerName,
-        status: this.bookForm.value.owner ?? BookStatus.Default,
-        date: this.bookForm.value.sinceDueDate ? new Date(this.bookForm.value.sinceDueDate) : undefined,
+        id: -1,
+        title: this.bookForm.getRawValue().title ?? "",
+        otherName: otherName,
+        status: this.bookForm.getRawValue().owner ?? BookStatus.Default,
+        date: date ? new Date(date) : undefined,
       };
-      console.log("In dialog:");
-      console.log(newBook);
       this.bookForm.reset();
       this.dialogRef.close(newBook);
     }

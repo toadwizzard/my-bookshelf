@@ -201,17 +201,51 @@ export class BookService {
   }
 
   addBook(userId: number, book: BookInfo): BookInfo {
+    let otherName, date;
+    if(book.status === BookStatus.Default || book.status === BookStatus.Wishlist){
+      otherName = undefined;
+      date = undefined;
+    } else {
+      otherName = book.otherName;
+      date = book.date;
+    }
     const newBook = {
       id: this.getLargestBookId() + 1,
       title: book.title,
-      otherName: book.otherName,
+      otherName: otherName,
       status: book.status,
-      date: book.date
+      date: date
     };
     books.push({
       ...newBook,
       ownerId: userId
     });
     return newBook;
+  }
+
+  updateBook(userId: number, book: BookInfo): BookInfo | undefined {
+    const bookIndex = books.findIndex(bk => bk.ownerId === userId && bk.id === book.id);
+    if(bookIndex >= 0){
+      books[bookIndex].title = book.title;
+      books[bookIndex].status = book.status;
+      if(book.status === BookStatus.Default || book.status === BookStatus.Wishlist){
+        books[bookIndex].otherName = undefined;
+        books[bookIndex].date = undefined;
+      } else {
+        books[bookIndex].otherName = book.otherName;
+        books[bookIndex].date = book.date;
+      }
+      return books[bookIndex];
+    }
+    return undefined;
+  }
+
+  deleteBook(userId: number, bookId: number): boolean {
+    const bookIndex = books.findIndex(book => book.ownerId === userId && book.id === bookId)
+    if(bookIndex >= 0){
+      books.splice(bookIndex, 1);
+      return true;
+    }
+    return false;
   }
 }

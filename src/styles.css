@@ -3,13 +3,17 @@
 
 :root {
   --app-white: white;
-  --background-color: rgb(243, 223, 167);
+  --background-color: #f3dfa7;
   --background-lighter: rgb(250, 235, 194);
   --background-darker: rgb(236, 215, 156);
   --background-hover: white;
-  --accent-color: rgb(95, 25, 25);
-  --accent-hover: rgb(146, 62, 62);
-  --accent-grey: rgb(126, 93, 93);
+  --accent-color: #5f1919;
+  --accent-hover: rgb(168, 72, 72);
+  --accent-disabled: rgb(126, 93, 93);
+  --app-green: #7B6824;
+  --app-green-hover: #a7975d;
+  --app-red: rgb(187, 2, 2);
+  --app-red-hover: rgb(243, 83, 83);
 }
 
 body {
@@ -23,20 +27,43 @@ button.base-button {
   color: var(--app-white);
   border: 2px outset var(--accent-color);
   border-radius: 15px;
-  display: block;
   padding: 0.5rem 1rem;
   margin: 0;
 }
 
 button.base-button:hover {
   background-color: var(--accent-hover);
+  border-color: var(--accent-hover);
 }
 
 button.base-button:disabled {
-  background-color: var(--accent-grey);
-  border-color: var(--accent-grey);
+  background-color: var(--accent-disabled);
+  border-color: var(--accent-disabled);
   border-style: solid;
   cursor: not-allowed;
+}
+button.base-button.icon-button {
+  padding: 0.5rem;
+  width: auto;
+  aspect-ratio: 1/1;
+}
+
+button.base-button.red {
+  background-color: var(--app-red);
+  border-color: var(--app-red);
+}
+button.base-button.red:hover {
+  background-color: var(--app-red-hover);
+  border-color: var(--app-red-hover);
+}
+
+button.base-button.green {
+  background-color: var(--app-green);
+  border-color: var(--app-green);
+}
+button.base-button.green:hover {
+  background-color: var(--app-green-hover);
+  border-color: var(--app-green-hover);
 }
 
 .dialog {
