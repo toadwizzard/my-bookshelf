@@ -1,0 +1,14 @@
+.bookshelf-container {
+  width: 75%;
+  margin: 2rem auto;
+}
+
+.bookshelf-top {
+  display: flex;
+  justify-content: space-between;
+}
+
+.bookshelf-top button {
+  align-self: flex-end;
+  margin-bottom: 1rem;
+}

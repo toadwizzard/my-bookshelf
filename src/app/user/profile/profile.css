@@ -1,0 +1,20 @@
+.profile-container {
+  margin: 2rem auto;
+  padding: 1rem;
+  border: 2px solid var(--accent-color);
+  border-radius: 5px;
+  width: 25%;
+  background-color: var(--background-lighter);
+  display: flex;
+  flex-direction: column;
+  row-gap: 1rem;
+}
+
+.profile-container p {
+  margin: 0;
+}
+
+.profile-container div {
+  display: flex;
+  justify-content: space-between;
+}
