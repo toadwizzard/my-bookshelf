@@ -1,1 +1,19 @@
-<p>My Bookshelf</p>
+<header>
+  <nav>
+    <h1><a routerLink="/">My Bookshelf</a></h1>
+    @if(authService.isLoggedIn()){
+      <a routerLink="/wishlist">My Wishlist</a>
+      <a routerLink="/profile">Profile</a>
+    }
+    <div>
+      @if(authService.isLoggedIn()){
+        <a routerLink="/login" (click)="logout()" title="Logout"><span class="material-icons">logout</span></a>
+      } @else {
+        <a routerLink="/login" title="Login"><span class="material-icons">login</span></a>
+      }
+    </div>
+  </nav>
+</header>
+<main>
+  <router-outlet />
+</main>
