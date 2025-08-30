@@ -26,7 +26,8 @@
             ],
             "styles": [
               "src/styles.css"
-            ]
+            ],
+            "outputPath": "dist/my-bookshelf"
           },
           "configurations": {
             "production": {
@@ -51,6 +52,9 @@
             }
           },
           "defaultConfiguration": "production"
+        },
+        "deploy": {
+          "builder": "angular-cli-ghpages:deploy"
         },
         "serve": {
           "builder": "@angular/build:dev-server",
