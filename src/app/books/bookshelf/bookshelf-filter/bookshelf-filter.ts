@@ -17,7 +17,8 @@ export interface BookshelfFilterValues {
   imports: [ReactiveFormsModule, NgClass],
   template: `
     <div class="form-container">
-      <p class="filterTitle" [ngClass]="{open: !formHidden}" (click)="toggleForm()">Filter</p>
+      <p class="filterTitle" [ngClass]="{open: !formHidden}" (click)="toggleForm()"
+        (keyup.enter)="toggleForm()" tabindex=0>Filter</p>
       <form [formGroup]="filterForm" (submit)="filterBooks()" [ngClass]="{hidden: formHidden}">
         <div class="checkboxes">
           <input type="checkbox" id="onShelf" formControlName="onShelf"><label for="onShelf">Books on shelf</label><br>

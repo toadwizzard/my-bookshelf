@@ -38,7 +38,7 @@ export class Bookshelf {
   bookFormDialog = inject(Dialog);
 
   constructor() {
-    this.books = this.bookService.getShelvedBooks(1);
+    this.books = this.bookService.getShelvedBooks();
     this.filteredBooks = this.books;
   }
 
@@ -63,15 +63,17 @@ export class Bookshelf {
 
     addBookDialogRef.closed.subscribe(result => {
       if(result){
-        const addedBook = this.bookService.addBook(1, result);
-        this.books.push(addedBook);
-        this.bookFilter()?.filterBooks();
+        const addedBook = this.bookService.addBook(result);
+        if(addedBook){
+          this.books.push(addedBook);
+          this.bookFilter()?.filterBooks();
+        }
       }
     })
   }
 
   openEditBookDialog(id: number, isLend: boolean){
-    const book = this.bookService.getBookById(1, id);
+    const book = this.bookService.getBookById(id);
     if(!book)
       return;
     const editBookDialogRef = this.bookFormDialog.open<BookInfo>(BookshelfFormDialog, {
@@ -87,7 +89,7 @@ export class Bookshelf {
         book.date !== result.date
       )) {
         result.id = book.id;
-        const editedBook = this.bookService.updateBook(1,result);
+        const editedBook = this.bookService.updateBook(result);
         if(editedBook){
           const modifiedIndex = this.findBookIndex(editedBook);
           if(modifiedIndex >= 0){
@@ -100,10 +102,10 @@ export class Bookshelf {
   }
 
   returnBook(id: number){
-    const originalBook = this.bookService.getBookById(1,id);
+    const originalBook = this.bookService.getBookById(id);
     if(!originalBook || originalBook.status !== BookStatus.Lent)
       return;
-    const returnedBook = this.bookService.updateBook(1, {
+    const returnedBook = this.bookService.updateBook({
       ...originalBook,
       status: BookStatus.Default,
       otherName: undefined,
@@ -119,8 +121,8 @@ export class Bookshelf {
   }
 
   deleteBook(id: number){
-    if(this.bookService.deleteBook(1, id)){
-      this.books = this.bookService.getShelvedBooks(1);
+    if(this.bookService.deleteBook(id)){
+      this.books = this.bookService.getShelvedBooks();
       this.bookFilter()?.filterBooks();
     }
   }

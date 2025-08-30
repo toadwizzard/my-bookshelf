@@ -20,13 +20,21 @@ nav a:hover {
   transform: scale(1.1) translate(0,-0.1rem);
 }
 
-nav a.title {
+nav h1 {
   font-size: 2rem;
   font-weight: bolder;
+  margin: 0;
 }
 
-nav a.title:hover, nav a.title:focus {
+nav h1 a.title:hover, nav h1 a.title:focus {
   transform: none;
+}
+
+nav div {
+  flex-grow: 1;
+  display: flex;
+  justify-content: end;
+  column-gap: inherit;
 }
 
 main {

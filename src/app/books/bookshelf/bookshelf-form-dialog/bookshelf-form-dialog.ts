@@ -42,12 +42,12 @@ import { formatDate } from '@angular/common';
           </div>
         </div>
       }
-      <button class="base-button" type="submit" (click)="submitForm()" [disabled]="!bookForm.valid">
+      <button class="base-button" type="submit" [disabled]="!bookForm.valid">
         {{isLend ? "Lend" : (isEditing ? "Edit" : "Add")}}
       </button>
     </form>
   `,
-  styleUrl: `../../../shared/dialog-form-styles.css`,
+  styleUrl: `../../../shared/form-styles.css`,
 })
 export class BookshelfFormDialog {
   dialogRef = inject<DialogRef<BookInfo>>(DialogRef<BookInfo>);
@@ -94,7 +94,7 @@ export class BookshelfFormDialog {
   constructor() {
     this.isEditing = !!this.data;
     this.isLend = !!this.data?.isLend;
-    if(!!this.data){
+    if(this.data){
       const book: BookInfo = this.data.book;
       this.bookForm.patchValue({
         title: book.title,
@@ -117,7 +117,7 @@ export class BookshelfFormDialog {
   submitForm(){
     if(this.bookForm.valid){
       let otherName, date;
-      if(this.bookForm.value.owner === BookStatus.Default || !this.bookForm.value.owner){
+      if(this.bookForm.value.owner === BookStatus.Default || !this.bookForm.getRawValue().owner){
         otherName = undefined;
         date = undefined;
       } else {

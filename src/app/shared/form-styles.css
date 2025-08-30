@@ -1,0 +1,53 @@
+.form-container {
+  width: 25%;
+  margin: 2rem auto 0;
+  border: 2px solid var(--accent-color);
+  border-radius: 5px;
+  padding: 0 1rem 1rem;
+  color: var(--accent-color);
+}
+
+div.input-container {
+  display: flex;
+  justify-content: space-between;
+  margin: 0.5rem 0;
+}
+
+button[type="submit"] {
+  display: block;
+  margin: 1rem auto 0;
+}
+
+input, select {
+  box-sizing: border-box;
+  width: 160px;
+}
+
+input:disabled, select:disabled {
+  cursor: not-allowed;
+}
+
+input.ng-invalid.ng-touched.ng-dirty {
+  border: 2px solid var(--app-red);
+}
+
+div.input-with-error-container p {
+  text-align: end;
+  margin: 0;
+  font-size: 0.8rem;
+  color: var(--app-red);
+}
+
+div.input-with-error-container div.input-container {
+  margin-bottom: 0.2rem;
+}
+
+.error-msg {
+  color: var(--app-red);
+}
+
+.error-msg span.material-icons {
+  font-size: 18px;
+  vertical-align: bottom;
+}
+

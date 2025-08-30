@@ -13,16 +13,25 @@ import { getOwnerNameFromBook, getStatusFromBook } from '../../shared/utils';
           <th class="orderable owner" [ngClass]="{
             orderAscend: orderedByOwnerAsc(),
             orderDescend: orderedByOwnerAsc() === false
-          }" (click)="orderByOwner()">Owner</th>
+          }"
+          (click)="orderByOwner()"
+          (keyup.enter)="orderByOwner()" tabindex=0>Owner</th>
           <th class="orderable title" [ngClass]="{
             orderAscend: orderedByTitleAsc(),
             orderDescend: orderedByTitleAsc() === false
-          }" (click)="orderByTitle()">Title</th>
+          }"
+          (click)="orderByTitle()"
+          (keyup.enter)="orderByTitle()" tabindex=0>Title</th>
           <th class="status">Status</th>
           <th class="actions">Actions</th>
         </tr>
       </thead>
       <tbody>
+        @if(orderedBooks().length === 0){
+          <tr>
+            <td class="empty-warning" colspan=4>No books to show. (Try adding a book first!)</td>
+          </tr>
+        }
         @for (book of orderedBooks(); track $index) {
           <tr>
             <td>{{getOwnerNameFromBook(book)}}</td>

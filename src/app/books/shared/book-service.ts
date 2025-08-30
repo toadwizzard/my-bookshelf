@@ -1,5 +1,7 @@
-import { Injectable } from '@angular/core';
+import { inject, Injectable } from '@angular/core';
 import { BookInfo, BookStatus } from './book-info';
+import { AuthService } from '../../user/shared/auth-service';
+import { UserService } from '../../user/shared/user-service';
 
 interface BookInfoWithId extends BookInfo {
   ownerId: number
@@ -156,7 +158,12 @@ const books: BookInfoWithId[] = [
   providedIn: 'root'
 })
 export class BookService {
-  getShelvedBooks(userId: number): BookInfo[] {
+  authService = inject(AuthService);
+
+  getShelvedBooks(): BookInfo[] {
+    const userId = this.handleAuthentication();
+    if(userId === undefined)
+      return [];
     return books.filter(book => book.ownerId === userId && book.status !== BookStatus.Wishlist)
       .map(book => ({
         id: book.id,
@@ -167,7 +174,10 @@ export class BookService {
       }));
   };
 
-  getWishlistedBooks(userId: number): BookInfo[] {
+  getWishlistedBooks(): BookInfo[] {
+    const userId = this.handleAuthentication();
+    if(userId === undefined)
+      return [];
     return books.filter(book => book.ownerId === userId && book.status === BookStatus.Wishlist)
       .map(book => ({
         id: book.id,
@@ -178,7 +188,10 @@ export class BookService {
       }));
   }
 
-  getBookById(userId: number, bookId: number): BookInfo | undefined {
+  getBookById(bookId: number): BookInfo | undefined {
+    const userId = this.handleAuthentication();
+    if(userId === undefined)
+      return undefined;
     let book: BookInfoWithId | undefined =
       books.find(book => book.id === bookId && book.ownerId === userId);
     return book ? {
@@ -191,16 +204,13 @@ export class BookService {
   }
 
   private getLargestBookId(): number {
-    return books.reduce((acc, cur) => {
-      if(acc.id === undefined)
-        return cur;
-      else if (cur.id === undefined)
-        return acc;
-      else return acc.id < cur.id ? cur : acc;
-    }).id ?? 1;
+    return books.reduce((acc, cur) => acc.id < cur.id ? cur : acc).id;
   }
 
-  addBook(userId: number, book: BookInfo): BookInfo {
+  addBook(book: BookInfo): BookInfo | undefined {
+    const userId = this.handleAuthentication();
+    if(userId === undefined)
+      return undefined;
     let otherName, date;
     if(book.status === BookStatus.Default || book.status === BookStatus.Wishlist){
       otherName = undefined;
@@ -223,7 +233,10 @@ export class BookService {
     return newBook;
   }
 
-  updateBook(userId: number, book: BookInfo): BookInfo | undefined {
+  updateBook(book: BookInfo): BookInfo | undefined {
+    const userId = this.handleAuthentication();
+    if(userId === undefined)
+      return undefined;
     const bookIndex = books.findIndex(bk => bk.ownerId === userId && bk.id === book.id);
     if(bookIndex >= 0){
       books[bookIndex].title = book.title;
@@ -240,12 +253,21 @@ export class BookService {
     return undefined;
   }
 
-  deleteBook(userId: number, bookId: number): boolean {
+  deleteBook(bookId: number): boolean {
+    const userId = this.handleAuthentication();
+    if(userId === undefined)
+      return false;
     const bookIndex = books.findIndex(book => book.ownerId === userId && book.id === bookId)
     if(bookIndex >= 0){
       books.splice(bookIndex, 1);
       return true;
     }
     return false;
+  }
+
+  //stand in for 401 http responses
+  userService = inject(UserService);
+  private handleAuthentication(): number | undefined {
+    return this.userService.handleAuthentication();
   }
 }

@@ -36,7 +36,7 @@ export class Wishlist {
   filteredBooks: BookInfo[] = [];
 
   constructor() {
-    this.books = this.bookService.getWishlistedBooks(1);
+    this.books = this.bookService.getWishlistedBooks();
     this.filteredBooks = this.books;
   }
 
@@ -51,21 +51,23 @@ export class Wishlist {
 
     addBookDialogRef.closed.subscribe(result => {
       if(result){
-        const addedBook = this.bookService.addBook(1, {
+        const addedBook = this.bookService.addBook({
           id: -1,
           title: result,
           status: BookStatus.Wishlist,
           otherName: undefined,
           date: undefined
         });
-        this.books.push(addedBook);
-        this.bookFilter()?.filterBooks();
+        if(addedBook){
+          this.books.push(addedBook);
+          this.bookFilter()?.filterBooks();
+        }
       }
     })
   }
 
   openEditBookDialog(id: number){
-    const book = this.bookService.getBookById(1, id);
+    const book = this.bookService.getBookById(id);
     if(!book)
       return;
     const editBookDialogRef = this.bookFormDialog.open<string>(WishlistFormDialog, {
@@ -75,7 +77,7 @@ export class Wishlist {
 
     editBookDialogRef.closed.subscribe(result => {
       if(result && book.title !== result) {
-        const editedBook = this.bookService.updateBook(1,{
+        const editedBook = this.bookService.updateBook({
           ...book,
           title: result
         });
@@ -91,10 +93,10 @@ export class Wishlist {
   }
 
   addBookToOwned(id: number){
-    const originalBook = this.bookService.getBookById(1,id);
+    const originalBook = this.bookService.getBookById(id);
     if(!originalBook || originalBook.status !== BookStatus.Wishlist)
       return;
-    const toOwnedBook = this.bookService.updateBook(1, {
+    const toOwnedBook = this.bookService.updateBook({
       ...originalBook,
       status: BookStatus.Default,
       otherName: undefined,
@@ -103,15 +105,15 @@ export class Wishlist {
     if(toOwnedBook){
       const ownedIndex = this.findBookIndex(toOwnedBook);
       if(ownedIndex >= 0){
-        this.books = this.bookService.getWishlistedBooks(1);
+        this.books.splice(ownedIndex, 1);
         this.bookFilter()?.filterBooks();
       }
     }
   }
 
   deleteBook(id: number){
-    if(this.bookService.deleteBook(1, id)){
-      this.books = this.bookService.getWishlistedBooks(1);
+    if(this.bookService.deleteBook(id)){
+      this.books = this.bookService.getWishlistedBooks();
       this.bookFilter()?.filterBooks();
     }
   }

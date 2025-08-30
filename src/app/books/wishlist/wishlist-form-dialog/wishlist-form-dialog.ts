@@ -16,12 +16,12 @@ import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angula
         <label for="title">Title:</label>
         <input type="text" id="title" formControlName="title" placeholder="Title">
       </div>
-      <button class="base-button" type="submit" (click)="submitForm()" [disabled]="!bookForm.valid">
+      <button class="base-button" type="submit" [disabled]="!bookForm.valid">
         {{isEditing ? "Edit" : "Add"}}
       </button>
     </form>
   `,
-  styleUrl: `../../../shared/dialog-form-styles.css`,
+  styleUrl: `../../../shared/form-styles.css`,
 })
 export class WishlistFormDialog {
   dialogRef = inject<DialogRef<string>>(DialogRef<string>);

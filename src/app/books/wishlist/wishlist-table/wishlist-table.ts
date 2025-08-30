@@ -12,11 +12,18 @@ import { NgClass } from '@angular/common';
           <th class="orderable title" [ngClass]="{
             orderAscend: orderedByTitleAsc(),
             orderDescend: orderedByTitleAsc() === false
-          }" (click)="orderByTitle()">Title</th>
+          }"
+          (click)="orderByTitle()"
+          (keyup.enter)="orderByTitle()" tabindex=0>Title</th>
           <th class="actions">Actions</th>
         </tr>
       </thead>
       <tbody>
+        @if(orderedBooks().length === 0){
+          <tr>
+            <td class="empty-warning" colspan=2>No items to show. (Try adding a book first!)</td>
+          </tr>
+        }
         @for (book of orderedBooks(); track $index) {
           <tr>
             <td>{{book.title}}</td>

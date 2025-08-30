@@ -7,7 +7,8 @@ import { FormControl, FormGroup, ReactiveFormsModule } from '@angular/forms';
   imports: [NgClass, ReactiveFormsModule],
   template: `
     <div class="form-container">
-      <p class="filterTitle" [ngClass]="{open: !formHidden}" (click)="toggleForm()">Filter</p>
+      <p class="filterTitle" [ngClass]="{open: !formHidden}" (click)="toggleForm()"
+        (keyup.enter)="toggleForm()" tabindex=0>Filter</p>
       <form [formGroup]="filterForm" (submit)="filterBooks()" [ngClass]="{hidden: formHidden}">
         <div>
           <label for="title">Title:</label>

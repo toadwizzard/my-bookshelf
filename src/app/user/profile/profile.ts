@@ -1,6 +1,6 @@
 import { Component, inject } from '@angular/core';
-import { UserService } from '../user-service';
-import { UserInfo } from '../user-info';
+import { UserService } from '../shared/user-service';
+import { UserInfo } from '../shared/user-info';
 import { Dialog } from '@angular/cdk/dialog';
 import { ProfileForm } from '../profile-form/profile-form';
 
@@ -29,12 +29,21 @@ export class Profile {
   formDialog = inject(Dialog);
 
   constructor() {
-    this.user = this.userService.getUser(1);
+    this.user = this.userService.getUser();
   }
 
   openFormDialog() {
-    const dialogRef = this.formDialog.open(ProfileForm);
+    if(!this.user)
+      return;
+    const dialogRef = this.formDialog.open<UserInfo>(ProfileForm, {
+      width: '400px',
+      data: {user: this.user}
+    });
 
-    dialogRef.closed.subscribe(result => console.log("Dialog closed"));
+    dialogRef.closed.subscribe(result => {
+      if(result){
+        this.user = this.userService.updateUser(result);
+      }
+    });
   }
 }
