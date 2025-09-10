@@ -9,16 +9,16 @@ interface UserInfoWithId extends UserInfo {
 
 const users: UserInfoWithId[] = [
   {
-    id: 1,
+    id: 2,
     username: "admin",
     email: "q@q.com",
     password: "admin",
   },
   {
-    id: 2,
+    id: 1,
     username: "user",
     email: "w@w.com",
-    password: "pw",
+    password: "password",
   }
 ]
 

@@ -55,7 +55,8 @@
             "styles": [
               "src/styles.css"
             ],
-            "outputPath": "dist/my-bookshelf"
+            "outputPath": "dist/my-bookshelf",
+            "baseHref": "/my-bookshelf/"
           },
           "configurations": {
             "production": {
@@ -82,7 +83,10 @@
           "defaultConfiguration": "production"
         },
         "deploy": {
-          "builder": "angular-cli-ghpages:deploy"
+          "builder": "angular-cli-ghpages:deploy",
+          "options": {
+            "baseHref": "/my-bookshelf/"
+          }
         },
         "serve": {
           "builder": "@angular/build:dev-server",
