@@ -1,6 +1,6 @@
 import { DIALOG_DATA, DialogRef } from '@angular/cdk/dialog';
 import { Component, inject } from '@angular/core';
-import { BookInfo, BookStatus } from '../../shared/book-info';
+import { BookInfo, BookStatus } from '../../../models/book-info';
 import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { formatDate } from '@angular/common';
 

@@ -1,5 +1,5 @@
 import { Component, computed, input, output, signal } from '@angular/core';
-import { BookInfo } from '../../shared/book-info';
+import { BookInfo } from '../../../models/book-info';
 import { NgClass } from '@angular/common';
 
 @Component({

@@ -1,9 +1,9 @@
 import { Component, inject, viewChild } from '@angular/core';
 import { WishlistFilter } from './wishlist-filter/wishlist-filter';
 import { WishlistTable } from './wishlist-table/wishlist-table';
-import { BookService } from '../shared/book-service';
-import { BookInfo, BookStatus } from '../shared/book-info';
-import { stringMatches } from '../shared/utils';
+import { BookService } from '../../services/book-service';
+import { BookInfo, BookStatus } from '../../models/book-info';
+import { stringMatches } from '../../helpers/utils';
 import { Dialog } from '@angular/cdk/dialog';
 import { WishlistFormDialog } from './wishlist-form-dialog/wishlist-form-dialog';
 

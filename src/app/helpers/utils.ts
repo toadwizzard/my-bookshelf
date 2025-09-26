@@ -1,5 +1,5 @@
 import { formatDate } from "@angular/common";
-import { BookInfo, BookStatus } from "./book-info";
+import { BookInfo, BookStatus } from "../models/book-info";
 
 const dateFormat = "y. MM. dd.";
 const locale = "en-US";

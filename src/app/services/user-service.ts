@@ -1,5 +1,5 @@
 import { inject, Injectable } from '@angular/core';
-import { UserInfo } from './user-info';
+import { UserInfo } from '../models/user-info';
 import { AuthService } from './auth-service';
 import { Router } from '@angular/router';
 

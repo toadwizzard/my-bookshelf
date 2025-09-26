@@ -1,7 +1,7 @@
 import { NgClass } from '@angular/common';
 import { Component, computed, input, output, signal } from '@angular/core';
-import { BookInfo, BookStatus } from '../../shared/book-info';
-import { getOwnerNameFromBook, getStatusFromBook } from '../../shared/utils';
+import { BookInfo, BookStatus } from '../../../models/book-info';
+import { getOwnerNameFromBook, getStatusFromBook } from '../../../helpers/utils';
 
 @Component({
   selector: 'app-bookshelf-table',

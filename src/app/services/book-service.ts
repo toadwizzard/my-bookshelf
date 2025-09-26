@@ -1,7 +1,7 @@
 import { inject, Injectable } from '@angular/core';
-import { BookInfo, BookStatus } from './book-info';
-import { AuthService } from '../../user/shared/auth-service';
-import { UserService } from '../../user/shared/user-service';
+import { BookInfo, BookStatus } from '../models/book-info';
+import { AuthService } from './auth-service';
+import { UserService } from './user-service';
 
 interface BookInfoWithId extends BookInfo {
   ownerId: number

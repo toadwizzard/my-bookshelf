@@ -1,9 +1,9 @@
 import { Component, inject, viewChild } from '@angular/core';
-import { BookService } from '../shared/book-service';
-import { BookInfo, BookStatus } from '../shared/book-info';
+import { BookService } from '../../services/book-service';
+import { BookInfo, BookStatus } from '../../models/book-info';
 import { BookshelfFilter, BookshelfFilterValues } from './bookshelf-filter/bookshelf-filter';
 import { BookshelfTable } from './bookshelf-table/bookshelf-table';
-import { getOwnerNameFromBook, stringMatches } from '../shared/utils';
+import { getOwnerNameFromBook, stringMatches } from '../../helpers/utils';
 import { Dialog } from '@angular/cdk/dialog';
 import { BookshelfFormDialog } from './bookshelf-form-dialog/bookshelf-form-dialog';
 

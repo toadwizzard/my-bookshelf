@@ -1,5 +1,5 @@
 import { AbstractControl, ValidationErrors, ValidatorFn } from "@angular/forms";
-import { UserService } from "./user-service";
+import { UserService } from "../../services/user-service";
 
 export function uniqueUsernameValidator(userService: UserService): ValidatorFn {
   return (control: AbstractControl): ValidationErrors | null => {
