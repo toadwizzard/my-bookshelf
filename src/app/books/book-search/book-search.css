@@ -1,0 +1,41 @@
+button.search {
+  margin: 0;
+}
+
+.search-container {
+  margin-right: 15px;
+}
+
+.search-input-container {
+  display: flex;
+  justify-content: space-between;
+}
+.search-input-container input {
+  width: 75%;
+}
+
+.results {
+  margin-top: 1rem;
+  border: 2px solid var(--accent-color);
+  border-radius: 5px;
+  position: absolute;
+  max-height: 10.8rem;
+  width: 45%;
+  z-index: 5;
+  background-color: var(--background-color);
+}
+
+.closed {
+  overflow-y: hidden;
+}
+
+.open {
+  overflow-y: scroll;
+}
+
+.results-clearfix {
+  margin-top: 1rem;
+  border: 2px solid transparent;
+  position: relative;
+  height: 5rem;
+}

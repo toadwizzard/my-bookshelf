@@ -1,0 +1,25 @@
+.search-result {
+  padding: 5px;
+  cursor: pointer;
+}
+
+.search-result p {
+  margin: 0;
+}
+
+.author {
+  font-size: small;
+  font-style: italic;
+}
+
+.search-result.odd {
+  background-color: var(--background-darker);
+}
+
+.search-result.even {
+  background-color: var(--background-lighter);
+}
+
+.search-result:hover {
+  background-color: var(--background-hover);
+}

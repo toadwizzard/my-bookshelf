@@ -58,7 +58,7 @@ export class Bookshelf {
 
   openAddBookDialog(){
     const addBookDialogRef = this.bookFormDialog.open<BookInfo>(BookshelfFormDialog, {
-      width: '400px'
+      width: '800px'
     });
 
     addBookDialogRef.closed.subscribe(result => {
