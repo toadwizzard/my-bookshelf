@@ -2,8 +2,8 @@ import { DIALOG_DATA, DialogRef } from '@angular/cdk/dialog';
 import { Component, inject } from '@angular/core';
 import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { matchingPasswordsValidator, uniqueUsernameValidator } from '../shared/user-form-validators';
-import { UserService } from '../shared/user-service';
-import { UserInfo } from '../shared/user-info';
+import { UserService } from '../../services/user-service';
+import { UserInfo } from '../../models/user-info';
 
 @Component({
   selector: 'app-profile-form',

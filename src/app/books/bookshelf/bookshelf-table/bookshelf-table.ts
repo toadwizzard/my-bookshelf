@@ -1,7 +1,11 @@
 import { NgClass } from '@angular/common';
 import { Component, computed, input, output, signal } from '@angular/core';
-import { BookInfo, BookStatus } from '../../shared/book-info';
-import { getOwnerNameFromBook, getStatusFromBook } from '../../shared/utils';
+import {
+  getOwnerNameFromBook,
+  getStatusFromBook,
+} from '../../../helpers/utils';
+import { BookStatus } from '../../../models/shelved-book-info';
+import { ShelvedBookWithData } from '../../../models/shelved-book-with-data';
 
 @Component({
   selector: 'app-bookshelf-table',
@@ -10,74 +14,112 @@ import { getOwnerNameFromBook, getStatusFromBook } from '../../shared/utils';
     <table class="bookshelf">
       <thead>
         <tr>
-          <th class="orderable owner" [ngClass]="{
-            orderAscend: orderedByOwnerAsc(),
-            orderDescend: orderedByOwnerAsc() === false
-          }"
-          (click)="orderByOwner()"
-          (keyup.enter)="orderByOwner()" tabindex=0>Owner</th>
-          <th class="orderable title" [ngClass]="{
-            orderAscend: orderedByTitleAsc(),
-            orderDescend: orderedByTitleAsc() === false
-          }"
-          (click)="orderByTitle()"
-          (keyup.enter)="orderByTitle()" tabindex=0>Title</th>
+          <th
+            class="orderable owner"
+            [ngClass]="{
+              orderAscend: orderedByOwnerAsc(),
+              orderDescend: orderedByOwnerAsc() === false
+            }"
+            (click)="orderByOwner()"
+            (keyup.enter)="orderByOwner()"
+            tabindex="0"
+          >
+            Owner
+          </th>
+          <th
+            class="orderable title"
+            [ngClass]="{
+              orderAscend: orderedByTitleAsc(),
+              orderDescend: orderedByTitleAsc() === false
+            }"
+            (click)="orderByTitle()"
+            (keyup.enter)="orderByTitle()"
+            tabindex="0"
+          >
+            Title
+          </th>
+          <th class="author">Author(s)</th>
           <th class="status">Status</th>
           <th class="actions">Actions</th>
         </tr>
       </thead>
       <tbody>
         @if(orderedBooks().length === 0){
-          <tr>
-            <td class="empty-warning" colspan=4>No books to show. (Try adding a book first!)</td>
-          </tr>
-        }
-        @for (book of orderedBooks(); track $index) {
-          <tr>
-            <td>{{getOwnerNameFromBook(book)}}</td>
-            <td>{{book.title}}</td>
-            <td>{{getStatusFromBook(book)}}</td>
-            <td>
-              <div class="action-button-container">
-                @if (book.status === defaultStatus){
-                  <button title="Lend" class="base-button icon-button green" (click)="lendBook(book.id)">
-                    <span class="material-icons">output</span>
-                  </button>
-                }
-                @if (book.status === borrowedStatus || book.status === libraryBorrowedStatus) {
-                  <button title="Return to owner" class="base-button icon-button green" (click)="deleteBook(book.id)">
-                    <span class="material-icons">output</span>
-                  </button>
-                }
-                @if (book.status === lentStatus) {
-                  <button title="Return to me" class="base-button icon-button green" (click)="returnBook(book.id)">
-                    <span class="material-icons">input</span>
-                  </button>
-                }
-                <button title="Edit" class="base-button icon-button" (click)="editBook(book.id)">
-                  <span class="material-icons">edit</span>
-                </button>
-                @if (book.status === defaultStatus || book.status === lentStatus) {
-                  <button title="Delete" class="base-button icon-button red" (click)="deleteBook(book.id)">
-                    <span class="material-icons">delete</span>
-                  </button>
-                }
-              </div>
-            </td>
-          </tr>
+        <tr>
+          <td class="empty-warning" colspan="5">
+            No books to show. (Try adding a book first!)
+          </td>
+        </tr>
+        } @for (book of orderedBooks(); track $index) {
+        <tr>
+          <td>{{ getOwnerNameFromBook(book) }}</td>
+          <td>{{ book.title }}</td>
+          <td>{{ book.author_name.join(', ') }}</td>
+          <td>{{ getStatusFromBook(book) }}</td>
+          <td>
+            <div class="action-button-container">
+              @if (book.status === defaultStatus){
+              <button
+                title="Lend"
+                class="base-button icon-button green"
+                (click)="lendBook(book.id)"
+              >
+                <span class="material-icons">output</span>
+              </button>
+              } @if (book.status === borrowedStatus || book.status ===
+              libraryBorrowedStatus) {
+              <button
+                title="Return to owner"
+                class="base-button icon-button green"
+                (click)="deleteBook(book.id)"
+              >
+                <span class="material-icons">output</span>
+              </button>
+              } @if (book.status === lentStatus) {
+              <button
+                title="Return to me"
+                class="base-button icon-button green"
+                (click)="returnBook(book.id)"
+              >
+                <span class="material-icons">input</span>
+              </button>
+              }
+              <button
+                title="Edit"
+                class="base-button icon-button"
+                (click)="editBook(book.id)"
+              >
+                <span class="material-icons">edit</span>
+              </button>
+              @if (book.status === defaultStatus || book.status === lentStatus)
+              {
+              <button
+                title="Delete"
+                class="base-button icon-button red"
+                (click)="deleteBook(book.id)"
+              >
+                <span class="material-icons">delete</span>
+              </button>
+              }
+            </div>
+          </td>
+        </tr>
         }
       </tbody>
     </table>
   `,
   styles: `
     .owner {
-      width: 20%;
+      width: 15%;
     }
     .title {
-      width: 25%;
+      width: 15%;
+    }
+    .author {
+      width: 20%;
     }
     .status {
-      width: 30%;
+      width: 25%;
     }
     .actions {
       width: 15%;
@@ -88,80 +130,80 @@ import { getOwnerNameFromBook, getStatusFromBook } from '../../shared/utils';
 export class BookshelfTable {
   orderedByOwnerAsc = signal<true | false | undefined>(undefined);
   orderedByTitleAsc = signal<true | false | undefined>(undefined);
-  books = input<BookInfo[]>([]);
-  orderedBooks = computed<BookInfo[]>(() => {
-    if(this.orderedByOwnerAsc() !== undefined)
-      return this.getOrderByOwner();
-    if(this.orderedByTitleAsc() !== undefined)
-      return this.getOrderByTitle();
+  books = input<ShelvedBookWithData[]>([]);
+  orderedBooks = computed<ShelvedBookWithData[]>(() => {
+    if (this.orderedByOwnerAsc() !== undefined) return this.getOrderByOwner();
+    if (this.orderedByTitleAsc() !== undefined) return this.getOrderByTitle();
     return this.books();
-  })
+  });
   delete = output<number>();
   edit = output<number>();
   lend = output<number>();
   return = output<number>();
 
-  get defaultStatus(){
+  get defaultStatus() {
     return BookStatus.Default;
   }
 
-  get lentStatus(){
+  get lentStatus() {
     return BookStatus.Lent;
   }
 
-  get borrowedStatus(){
+  get borrowedStatus() {
     return BookStatus.Borrowed;
   }
 
-  get libraryBorrowedStatus(){
+  get libraryBorrowedStatus() {
     return BookStatus.LibraryBorrowed;
   }
 
-  getOwnerNameFromBook(book: BookInfo): string {
+  getOwnerNameFromBook(book: ShelvedBookWithData): string {
     return getOwnerNameFromBook(book);
   }
 
-  getStatusFromBook(book: BookInfo): string {
+  getStatusFromBook(book: ShelvedBookWithData): string {
     return getStatusFromBook(book);
   }
 
-  orderByOwner(){
+  orderByOwner() {
     this.orderedByTitleAsc.set(undefined);
     this.orderedByOwnerAsc.set(!this.orderedByOwnerAsc());
   }
 
-  private getOrderByOwner(): BookInfo[]{
+  private getOrderByOwner(): ShelvedBookWithData[] {
     return this.books().toSorted((a, b) =>
-      this.orderedByOwnerAsc() ?
-      getOwnerNameFromBook(a).localeCompare(getOwnerNameFromBook(b)) :
-      getOwnerNameFromBook(b).localeCompare(getOwnerNameFromBook(a))
+      this.orderedByOwnerAsc()
+        ? getOwnerNameFromBook(a).localeCompare(getOwnerNameFromBook(b))
+        : getOwnerNameFromBook(b).localeCompare(getOwnerNameFromBook(a))
     );
   }
 
-  orderByTitle(){
+  orderByTitle() {
     this.orderedByOwnerAsc.set(undefined);
     this.orderedByTitleAsc.set(!this.orderedByTitleAsc());
   }
 
-  private getOrderByTitle(): BookInfo[]{
+  private getOrderByTitle(): ShelvedBookWithData[] {
     return this.books().toSorted((a, b) =>
-      this.orderedByTitleAsc() ? a.title.localeCompare(b.title) : b.title.localeCompare(a.title)
+      this.orderedByTitleAsc()
+        ? a.title.localeCompare(b.title)
+        : b.title.localeCompare(a.title)
     );
   }
 
-  editBook(id: number){
+  editBook(id: number) {
     this.edit.emit(id);
   }
 
-  returnBook(id: number){
+  returnBook(id: number) {
     this.return.emit(id);
   }
 
-  lendBook(id: number){
+  lendBook(id: number) {
     this.lend.emit(id);
   }
 
-  deleteBook(id: number){
+  deleteBook(id: number) {
     this.delete.emit(id);
   }
 }

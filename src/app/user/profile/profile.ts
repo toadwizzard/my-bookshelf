@@ -1,6 +1,6 @@
 import { Component, inject } from '@angular/core';
-import { UserService } from '../shared/user-service';
-import { UserInfo } from '../shared/user-info';
+import { UserService } from '../../services/user-service';
+import { UserInfo } from '../../models/user-info';
 import { Dialog } from '@angular/cdk/dialog';
 import { ProfileForm } from '../profile-form/profile-form';
 

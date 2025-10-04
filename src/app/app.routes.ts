@@ -4,26 +4,26 @@ import { Wishlist } from './books/wishlist/wishlist';
 import { Profile } from './user/profile/profile';
 import { Login } from './user/login/login';
 import { Register } from './user/register/register';
-import { authenticatedToActivate } from './user/shared/auth-service';
+import { authGuard } from './helpers/auth.guard';
 
 export const routes: Routes = [
   {
     path: '',
     component: Bookshelf,
     title: 'My Bookshelf',
-    canActivate: [authenticatedToActivate],
+    canActivate: [authGuard],
   },
   {
     path: 'wishlist',
     component: Wishlist,
     title: 'My Wishlist',
-    canActivate: [authenticatedToActivate],
+    canActivate: [authGuard],
   },
   {
     path: 'profile',
     component: Profile,
     title: 'Profile',
-    canActivate: [authenticatedToActivate],
+    canActivate: [authGuard],
   },
   {
     path: 'login',
