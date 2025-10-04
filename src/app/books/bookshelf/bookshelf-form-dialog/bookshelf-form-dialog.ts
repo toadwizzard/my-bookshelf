@@ -1,6 +1,6 @@
 import { DIALOG_DATA, DialogRef } from '@angular/cdk/dialog';
 import { Component, inject } from '@angular/core';
-import { BookInfo, BookStatus } from '../../../models/book-info';
+import { BookInfo } from '../../../models/book-info';
 import {
   FormControl,
   FormGroup,
@@ -9,6 +9,8 @@ import {
 } from '@angular/forms';
 import { formatDate } from '@angular/common';
 import { BookSearch } from '../../book-search/book-search';
+import { BookStatus } from '../../../models/shelved-book-info';
+import { ShelvedBookWithData } from '../../../models/shelved-book-with-data';
 
 @Component({
   selector: 'app-bookshelf-form-dialog',
@@ -23,7 +25,7 @@ import { BookSearch } from '../../book-search/book-search';
     </h2>
     <form [formGroup]="bookForm" (submit)="submitForm()">
       <div class="split-form-content">
-        <app-book-search [bookKeyInput]="bookForm.controls.bookKey" />
+        <app-book-search formControlName="bookData" />
         <div>
           <div class="input-container">
             <label for="owner">{{ isEditing ? 'Status' : 'Add to:' }}</label>
@@ -39,19 +41,30 @@ import { BookSearch } from '../../book-search/book-search';
           <div>
             <div class="input-container">
               <label for="otherName"
-                >{{ isLent ? 'Lent to' : 'Owner name' }} (optional):</label
+                >{{
+                  isLend ? 'Lend to' : isLent ? 'Lent to' : 'Owner name'
+                }}
+                (optional):</label
               >
               <input
                 type="text"
                 id="otherName"
                 formControlName="otherName"
-                [placeholder]="isLent ? 'Lent to' : 'Owner name'"
+                [placeholder]="
+                  isLend ? 'Lend to' : isLent ? 'Lent to' : 'Owner name'
+                "
               />
             </div>
             <div class="input-container">
               <label for="sinceDueDate"
                 >{{
-                  isLent ? 'Lent on' : isDue ? 'Due' : 'Borrowed on'
+                  isLend
+                    ? 'Lend on'
+                    : isLent
+                    ? 'Lent on'
+                    : isDue
+                    ? 'Due'
+                    : 'Borrowed on'
                 }}
                 (optional):</label
               >
@@ -73,11 +86,17 @@ import { BookSearch } from '../../book-search/book-search';
   styleUrl: `../../../shared/form-styles.css`,
 })
 export class BookshelfFormDialog {
-  dialogRef = inject<DialogRef<BookInfo>>(DialogRef<BookInfo>);
-  data = inject<{ book: BookInfo; isLend: boolean } | undefined>(DIALOG_DATA);
+  dialogRef = inject<DialogRef<ShelvedBookWithData>>(
+    DialogRef<ShelvedBookWithData>
+  );
+  data = inject<
+    { shelvedBook: ShelvedBookWithData; isLend: boolean } | undefined
+  >(DIALOG_DATA);
 
   bookForm = new FormGroup({
-    bookKey: new FormControl<string>('', [Validators.required]),
+    bookData: new FormControl<BookInfo | undefined>(undefined, [
+      Validators.required,
+    ]),
     owner: new FormControl<
       | BookStatus.Default
       | BookStatus.Borrowed
@@ -122,21 +141,25 @@ export class BookshelfFormDialog {
     this.isEditing = !!this.data;
     this.isLend = !!this.data?.isLend;
     if (this.data) {
-      const book: BookInfo = this.data.book;
+      const shelvedBook: ShelvedBookWithData = this.data.shelvedBook;
       this.bookForm.patchValue({
-        bookKey: book.title,
+        bookData: {
+          bookKey: shelvedBook.bookKey,
+          title: shelvedBook.title,
+          author_name: shelvedBook.author_name,
+        },
         owner: this.isLend
           ? BookStatus.Lent
-          : book.status === BookStatus.Wishlist
+          : shelvedBook.status === BookStatus.Wishlist
           ? BookStatus.Default
-          : book.status,
-        otherName: book.otherName,
-        sinceDueDate: book.date
-          ? formatDate(book.date, 'y-MM-dd', 'en-US')
+          : shelvedBook.status,
+        otherName: shelvedBook.otherName,
+        sinceDueDate: shelvedBook.date
+          ? formatDate(shelvedBook.date, 'y-MM-dd', 'en-US')
           : '',
       });
       if (this.isLend) {
-        this.bookForm.get('title')?.disable();
+        this.bookForm.get('bookData')?.disable();
         this.bookForm.get('owner')?.disable();
       }
     }
@@ -159,9 +182,12 @@ export class BookshelfFormDialog {
         otherName = this.bookForm.value.otherName;
         date = this.bookForm.value.sinceDueDate;
       }
+      const bookData = this.bookForm.getRawValue().bookData;
       this.dialogRef.close({
         id: -1,
-        title: this.bookForm.getRawValue().bookKey ?? '',
+        bookKey: bookData ? bookData.bookKey : '',
+        title: bookData ? bookData.title : '',
+        author_name: bookData ? bookData.author_name : [],
         otherName: otherName,
         status: this.bookForm.getRawValue().owner ?? BookStatus.Default,
         date: date ? new Date(date) : undefined,

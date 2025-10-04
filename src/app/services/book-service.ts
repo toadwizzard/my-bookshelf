@@ -1,159 +1,111 @@
 import { inject, Injectable } from '@angular/core';
-import { BookInfo, BookStatus } from '../models/book-info';
+import { BookInfo } from '../models/book-info';
 import { AuthService } from './auth-service';
 import { UserService } from './user-service';
 import { BookResultInfo } from '../models/book-result-info';
 import { Observable } from 'rxjs';
 import { HttpClient } from '@angular/common/http';
+import { BookStatus, ShelvedBookInfo } from '../models/shelved-book-info';
+import { ShelvedBookWithData } from '../models/shelved-book-with-data';
 
-interface BookInfoWithId extends BookInfo {
+export interface ShelvedBookInfoWithId extends ShelvedBookInfo {
   ownerId: number;
 }
 
-const books: BookInfoWithId[] = [
+const books: BookInfo[] = [
   {
+    bookKey: '/works/OL492658W',
+    title: 'The Lightning Thief',
+    author_name: ['Rick Riordan'],
+  },
+  {
+    bookKey: '/works/OL492646W',
+    title: 'The Sea of Monsters',
+    author_name: ['Rick Riordan'],
+  },
+  {
+    bookKey: '/works/OL17054790W',
+    title: "Percy Jackson's Greek Gods",
+    author_name: ['Rick Riordan'],
+  },
+  {
+    bookKey: '/works/OL24372071W',
+    title: 'The Wizard of Oz',
+    author_name: ['L. Frank Baum', 'Harold Arlen', 'E Y Harburg'],
+  },
+  {
+    bookKey: '/works/OL52987W',
+    title: 'The Very Hungry Caterpillar',
+    author_name: ['Eric Carle'],
+  },
+  {
+    bookKey: '/works/OL27448W',
+    title: 'The Lord of the Rings',
+    author_name: ['J.R.R. Tolkien'],
+  },
+  {
+    bookKey: '/works/OL5735363W',
+    title: 'The Hunger Games',
+    author_name: ['Suzanne Collins'],
+  },
+];
+
+const shelvedBooks: ShelvedBookInfoWithId[] = [
+  {
+    ownerId: 1,
     id: 1,
-    ownerId: 1,
-    title: 'Example Book',
+    bookKey: '/works/OL492658W',
     otherName: undefined,
     status: BookStatus.Default,
     date: undefined,
   },
   {
+    ownerId: 1,
     id: 2,
-    ownerId: 1,
-    title: 'Example Lent Book',
+    bookKey: '/works/OL492646W',
     otherName: undefined,
     status: BookStatus.Lent,
     date: undefined,
   },
   {
+    ownerId: 1,
     id: 3,
-    ownerId: 1,
-    title: 'Example Book Lent To Named Borrower',
-    otherName: 'Example Borrower',
+    bookKey: '/works/OL17054790W',
+    otherName: 'Example borrower',
     status: BookStatus.Lent,
-    date: new Date(2025, 3, 5),
+    date: new Date(2025, 1, 15),
   },
   {
+    ownerId: 1,
     id: 4,
-    ownerId: 1,
-    title: 'Example Borrowed Book',
+    bookKey: '/works/OL24372071W',
     otherName: undefined,
     status: BookStatus.Borrowed,
     date: undefined,
   },
   {
+    ownerId: 1,
     id: 5,
-    ownerId: 1,
-    title: 'Example Borrowed Book With Named Lender',
-    otherName: 'Example Lender',
+    bookKey: '/works/OL52987W',
+    otherName: 'Example lender',
     status: BookStatus.Borrowed,
-    date: new Date(2025, 3, 5),
+    date: new Date(2025, 2, 28),
   },
   {
+    ownerId: 1,
     id: 6,
-    ownerId: 1,
-    title: 'Example Book Borrowed From Library',
+    bookKey: '/works/OL27448W',
     otherName: undefined,
     status: BookStatus.LibraryBorrowed,
     date: undefined,
   },
   {
+    ownerId: 1,
     id: 7,
-    ownerId: 1,
-    title: 'Example Book From Library With Named Library',
-    otherName: 'Example Library',
+    bookKey: '/works/OL5735363W',
+    otherName: 'Example library',
     status: BookStatus.LibraryBorrowed,
-    date: new Date(2025, 3, 5),
-  },
-  {
-    id: 8,
-    ownerId: 1,
-    title: 'Example Wishlisted Book',
-    otherName: undefined,
-    status: BookStatus.Wishlist,
-    date: undefined,
-  },
-  {
-    id: 9,
-    ownerId: 1,
-    title: 'Example Wishlisted Book',
-    otherName: undefined,
-    status: BookStatus.Wishlist,
-    date: undefined,
-  },
-  {
-    id: 10,
-    ownerId: 2,
-    title: 'Book1',
-    otherName: undefined,
-    status: BookStatus.Default,
-    date: undefined,
-  },
-  {
-    id: 11,
-    ownerId: 2,
-    title: 'Book2',
-    otherName: undefined,
-    status: BookStatus.Lent,
-    date: undefined,
-  },
-  {
-    id: 12,
-    ownerId: 2,
-    title: 'Book3',
-    otherName: 'some borrower',
-    status: BookStatus.Lent,
-    date: new Date(2025, 3, 5),
-  },
-  {
-    id: 13,
-    ownerId: 2,
-    title: 'Book4',
-    otherName: undefined,
-    status: BookStatus.Borrowed,
-    date: undefined,
-  },
-  {
-    id: 14,
-    ownerId: 2,
-    title: 'Book5',
-    otherName: 'some owner',
-    status: BookStatus.Borrowed,
-    date: new Date(2025, 3, 5),
-  },
-  {
-    id: 15,
-    ownerId: 2,
-    title: 'Book6',
-    otherName: undefined,
-    status: BookStatus.LibraryBorrowed,
-    date: undefined,
-  },
-  {
-    id: 16,
-    ownerId: 2,
-    title: 'Book7',
-    otherName: 'some library',
-    status: BookStatus.LibraryBorrowed,
-    date: new Date(2025, 3, 5),
-  },
-  {
-    id: 17,
-    ownerId: 2,
-    title: 'Book8',
-    otherName: undefined,
-    status: BookStatus.Wishlist,
-    date: undefined,
-  },
-  {
-    id: 18,
-    ownerId: 2,
-    title: 'Book9',
-    otherName: undefined,
-    status: BookStatus.Wishlist,
-    date: undefined,
+    date: new Date(2025, 3, 17),
   },
 ];
 
@@ -166,119 +118,149 @@ export class BookService {
   authService = inject(AuthService);
   http = inject(HttpClient);
 
-  getShelvedBooks(): BookInfo[] {
+  getShelvedBooks(): ShelvedBookWithData[] {
     const userId = this.handleAuthentication();
     if (userId === undefined) return [];
-    return books
+    return shelvedBooks
       .filter(
-        (book) => book.ownerId === userId && book.status !== BookStatus.Wishlist
+        (shelvedBook) =>
+          shelvedBook.ownerId === userId &&
+          shelvedBook.status !== BookStatus.Wishlist
       )
-      .map((book) => ({
-        id: book.id,
-        title: book.title,
-        otherName: book.otherName,
-        status: book.status,
-        date: book.date,
-      }));
+      .map((shelvedBook) => {
+        const bookData = books.find(
+          (book) => book.bookKey === shelvedBook.bookKey
+        );
+        if (!bookData) return undefined;
+        return { ...shelvedBook, ...bookData } as ShelvedBookWithData;
+      })
+      .filter(Boolean) as ShelvedBookWithData[];
   }
 
-  getWishlistedBooks(): BookInfo[] {
+  getWishlistedBooks(): ShelvedBookWithData[] {
     const userId = this.handleAuthentication();
     if (userId === undefined) return [];
-    return books
+    return shelvedBooks
       .filter(
-        (book) => book.ownerId === userId && book.status === BookStatus.Wishlist
+        (shelvedBook) =>
+          shelvedBook.ownerId === userId &&
+          shelvedBook.status === BookStatus.Wishlist
       )
-      .map((book) => ({
-        id: book.id,
-        title: book.title,
-        otherName: book.otherName,
-        status: book.status,
-        date: book.date,
-      }));
+      .map((shelvedBook) => {
+        const bookData = books.find(
+          (book) => book.bookKey === shelvedBook.bookKey
+        );
+        if (!bookData) return undefined;
+        return { ...shelvedBook, ...bookData } as ShelvedBookWithData;
+      })
+      .filter(Boolean) as ShelvedBookWithData[];
   }
 
-  getBookById(bookId: number): BookInfo | undefined {
+  getShelvedBookById(bookId: number): ShelvedBookWithData | undefined {
     const userId = this.handleAuthentication();
     if (userId === undefined) return undefined;
-    let book: BookInfoWithId | undefined = books.find(
-      (book) => book.id === bookId && book.ownerId === userId
+    const shelvedBook: ShelvedBookInfo | undefined = shelvedBooks.find(
+      (shelvedBook) =>
+        shelvedBook.id === bookId && shelvedBook.ownerId === userId
     );
-    return book
-      ? {
-          id: book.id,
-          title: book.title,
-          otherName: book.otherName,
-          status: book.status,
-          date: book.date,
-        }
-      : undefined;
+    const book: BookInfo | undefined = books.find(
+      (book) => book.bookKey === shelvedBook?.bookKey
+    );
+    return shelvedBook && book ? { ...shelvedBook, ...book } : undefined;
   }
 
-  private getLargestBookId(): number {
-    return books.reduce((acc, cur) => (acc.id < cur.id ? cur : acc)).id;
+  private getLargestShelvedBookId(): number {
+    return shelvedBooks.reduce((acc, cur) => (acc.id < cur.id ? cur : acc), {
+      id: 0,
+    }).id;
   }
 
-  addBook(book: BookInfo): BookInfo | undefined {
+  addShelvedBook(
+    shelvedBook: ShelvedBookWithData
+  ): ShelvedBookWithData | undefined {
     const userId = this.handleAuthentication();
     if (userId === undefined) return undefined;
     let otherName, date;
     if (
-      book.status === BookStatus.Default ||
-      book.status === BookStatus.Wishlist
+      shelvedBook.status === BookStatus.Default ||
+      shelvedBook.status === BookStatus.Wishlist
     ) {
       otherName = undefined;
       date = undefined;
     } else {
-      otherName = book.otherName;
-      date = book.date;
+      otherName = shelvedBook.otherName;
+      date = shelvedBook.date;
     }
-    const newBook = {
-      id: this.getLargestBookId() + 1,
-      title: book.title,
+    if (!this.bookWithKeyExists(shelvedBook.bookKey)) {
+      books.push({
+        bookKey: shelvedBook.bookKey,
+        title: shelvedBook.title,
+        author_name: shelvedBook.author_name,
+      });
+    }
+    const shelvedBookId = this.getLargestShelvedBookId() + 1;
+    const newShelvedBook: ShelvedBookInfo = {
+      id: shelvedBookId,
+      bookKey: shelvedBook.bookKey,
       otherName: otherName,
-      status: book.status,
+      status: shelvedBook.status,
       date: date,
     };
-    books.push({
-      ...newBook,
+    shelvedBooks.push({
+      ...newShelvedBook,
       ownerId: userId,
     });
-    return newBook;
+    return {
+      ...shelvedBook,
+      id: shelvedBookId,
+    };
   }
 
-  updateBook(book: BookInfo): BookInfo | undefined {
+  updateShelvedBook(
+    shelvedBook: ShelvedBookWithData
+  ): ShelvedBookWithData | undefined {
     const userId = this.handleAuthentication();
     if (userId === undefined) return undefined;
-    const bookIndex = books.findIndex(
-      (bk) => bk.ownerId === userId && bk.id === book.id
+    const bookIndex = shelvedBooks.findIndex(
+      (bk) => bk.ownerId === userId && bk.id === shelvedBook.id
     );
     if (bookIndex >= 0) {
-      books[bookIndex].title = book.title;
-      books[bookIndex].status = book.status;
-      if (
-        book.status === BookStatus.Default ||
-        book.status === BookStatus.Wishlist
-      ) {
-        books[bookIndex].otherName = undefined;
-        books[bookIndex].date = undefined;
-      } else {
-        books[bookIndex].otherName = book.otherName;
-        books[bookIndex].date = book.date;
+      if (!this.bookWithKeyExists(shelvedBook.bookKey)) {
+        books.push({
+          bookKey: shelvedBook.bookKey,
+          title: shelvedBook.title,
+          author_name: shelvedBook.author_name,
+        });
       }
-      return books[bookIndex];
+      shelvedBooks[bookIndex].bookKey = shelvedBook.bookKey;
+      shelvedBooks[bookIndex].status = shelvedBook.status;
+      if (
+        shelvedBook.status === BookStatus.Default ||
+        shelvedBook.status === BookStatus.Wishlist
+      ) {
+        shelvedBooks[bookIndex].otherName = undefined;
+        shelvedBooks[bookIndex].date = undefined;
+      } else {
+        shelvedBooks[bookIndex].otherName = shelvedBook.otherName;
+        shelvedBooks[bookIndex].date = shelvedBook.date;
+      }
+      return {
+        ...shelvedBooks[bookIndex],
+        title: shelvedBook.title,
+        author_name: shelvedBook.author_name,
+      };
     }
     return undefined;
   }
 
-  deleteBook(bookId: number): boolean {
+  deleteShelvedBook(shelvedBookId: number): boolean {
     const userId = this.handleAuthentication();
     if (userId === undefined) return false;
-    const bookIndex = books.findIndex(
-      (book) => book.ownerId === userId && book.id === bookId
+    const bookIndex = shelvedBooks.findIndex(
+      (book) => book.ownerId === userId && book.id === shelvedBookId
     );
     if (bookIndex >= 0) {
-      books.splice(bookIndex, 1);
+      shelvedBooks.splice(bookIndex, 1);
       return true;
     }
     return false;
@@ -289,6 +271,10 @@ export class BookService {
     return this.http.get<{ docs: BookResultInfo[] }>(
       `${this.OL_BASE_URL}/search.json?q=${searchQuery}&fields=key,title,author_name`
     );
+  }
+
+  private bookWithKeyExists(bookKey: string): boolean {
+    return books.some((book) => book.bookKey === bookKey);
   }
 
   //stand in for 401 http responses

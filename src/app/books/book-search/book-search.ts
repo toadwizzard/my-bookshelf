@@ -1,12 +1,26 @@
 import { NgClass } from '@angular/common';
-import { Component, inject, input } from '@angular/core';
+import { Component, inject } from '@angular/core';
 import { SearchResult } from './search-result/search-result';
 import { BookResultInfo } from '../../models/book-result-info';
-import { FormControl, ReactiveFormsModule, Validators } from '@angular/forms';
+import {
+  ControlValueAccessor,
+  FormControl,
+  NG_VALUE_ACCESSOR,
+  ReactiveFormsModule,
+  Validators,
+} from '@angular/forms';
 import { BookService } from '../../services/book-service';
+import { BookInfo } from '../../models/book-info';
 
 @Component({
   selector: 'app-book-search',
+  providers: [
+    {
+      provide: NG_VALUE_ACCESSOR,
+      multi: true,
+      useExisting: BookSearch,
+    },
+  ],
   imports: [NgClass, SearchResult, ReactiveFormsModule],
   template: `
     <div class="search-container">
@@ -21,9 +35,9 @@ import { BookService } from '../../services/book-service';
           />
           <button
             type="submit"
-            class="search"
+            class="search base-button"
             (click)="openSearch($event)"
-            [disabled]="!search.valid"
+            [disabled]="!search.valid || disabled"
           >
             Search
           </button>
@@ -58,23 +72,28 @@ import { BookService } from '../../services/book-service';
         } } }
       </div>
       <div class="results-clearfix"></div>
-      <input type="text" [formControl]="bookKeyInput()" [hidden]="true" />
     </div>
   `,
   styleUrls: ['../../shared/form-styles.css', 'book-search.css'],
 })
-export class BookSearch {
+export class BookSearch implements ControlValueAccessor {
   resultsOpen: boolean = false;
   results: BookResultInfo[] = [];
-  bookKeyInput = input.required<FormControl<string | null>>();
+  selectedBook: BookInfo | undefined = undefined;
 
   search = new FormControl<string>('', [Validators.required]);
   isSearchLoading: boolean = false;
   bookService = inject(BookService);
 
+  touched: boolean = false;
+  disabled: boolean = false;
+  onChange = (selectedBook: BookInfo | undefined) => {};
+  onTouched = () => {};
+
   openSearch(event: any) {
     event.preventDefault();
-    if (!this.search.value) return;
+    this.markAsTouched();
+    if (this.disabled || !this.search.value) return;
     this.isSearchLoading = true;
     this.bookService.searchBooks(this.search.value).subscribe({
       next: (result) => {
@@ -103,11 +122,48 @@ export class BookSearch {
   }
 
   selectResult(elementKey: string) {
+    if (!this.resultsOpen) return;
+    this.markAsTouched();
+    if (this.disabled) return;
     this.resultsOpen = false;
     const selectedResult = this.results.find(
       (result) => result.key === elementKey
     );
-    this.results = selectedResult ? [selectedResult] : [];
-    this.bookKeyInput().setValue(selectedResult?.key ?? '');
+    const selectedBook: BookInfo | undefined = selectedResult
+      ? {
+          bookKey: selectedResult.key ?? '',
+          title: selectedResult.title ?? '',
+          author_name: selectedResult.author_name ?? [],
+        }
+      : undefined;
+    this.writeValue(selectedBook);
+    this.onChange(selectedBook);
+  }
+
+  writeValue(selectedBook: BookInfo | undefined): void {
+    this.selectedBook = selectedBook;
+    this.results = this.selectedBook ? [this.selectedBook] : [];
+  }
+
+  registerOnChange(fn: any): void {
+    this.onChange = fn;
+  }
+
+  registerOnTouched(fn: any): void {
+    this.onTouched = fn;
+  }
+
+  setDisabledState(isDisabled: boolean): void {
+    if (this.disabled === isDisabled) return;
+    this.disabled = isDisabled;
+    if (this.disabled) this.search.disable();
+    else this.search.enable();
+  }
+
+  private markAsTouched(): void {
+    if (!this.touched) {
+      this.onTouched;
+      this.touched = true;
+    }
   }
 }

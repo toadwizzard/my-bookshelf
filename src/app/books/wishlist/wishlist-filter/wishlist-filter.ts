@@ -7,12 +7,37 @@ import { FormControl, FormGroup, ReactiveFormsModule } from '@angular/forms';
   imports: [NgClass, ReactiveFormsModule],
   template: `
     <div class="form-container">
-      <p class="filterTitle" [ngClass]="{open: !formHidden}" (click)="toggleForm()"
-        (keyup.enter)="toggleForm()" tabindex=0>Filter</p>
-      <form [formGroup]="filterForm" (submit)="filterBooks()" [ngClass]="{hidden: formHidden}">
+      <p
+        class="filterTitle"
+        [ngClass]="{ open: !formHidden }"
+        (click)="toggleForm()"
+        (keyup.enter)="toggleForm()"
+        tabindex="0"
+      >
+        Filter
+      </p>
+      <form
+        [formGroup]="filterForm"
+        (submit)="filterBooks()"
+        [ngClass]="{ hidden: formHidden }"
+      >
         <div>
           <label for="title">Title:</label>
-          <input type="text" placeholder="Filter by title" id="title" formControlName="title">
+          <input
+            type="text"
+            placeholder="Filter by title"
+            id="title"
+            formControlName="title"
+          />
+        </div>
+        <div>
+          <label for="author">Author:</label>
+          <input
+            type="text"
+            placeholder="Filter by author"
+            id="author"
+            formControlName="author"
+          />
         </div>
         <div class="buttons">
           <button class="base-button" type="submit">Filter</button>
@@ -27,26 +52,27 @@ export class WishlistFilter {
   formHidden: boolean = true;
   filterForm = new FormGroup({
     title: new FormControl<string>(''),
+    author: new FormControl<string>(''),
   });
-  filter = output<{title: string}>();
+  filter = output<{ title: string; author: string }>();
 
-  toggleForm(){
+  toggleForm() {
     this.formHidden = !this.formHidden;
   }
 
-  filterBooks(){
+  filterBooks() {
     this.filter.emit(this.getFilterValues());
   }
 
-  clearFilter(){
+  clearFilter() {
     this.filterForm.reset();
     this.filter.emit(this.getFilterValues());
   }
 
-  private getFilterValues(): {title: string} {
+  private getFilterValues(): { title: string; author: string } {
     return {
-      title: this.filterForm.value.title ?? "",
-    }
+      title: this.filterForm.value.title ?? '',
+      author: this.filterForm.value.author ?? '',
+    };
   }
-
 }
