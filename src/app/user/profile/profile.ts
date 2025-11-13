@@ -11,11 +11,11 @@ import { ProfileForm } from '../profile-form/profile-form';
     <div class="profile-container">
       <div>
         <p>Username:</p>
-        <p>{{user?.username}}</p>
+        <p>{{ user?.username }}</p>
       </div>
       <div>
         <p>Email:</p>
-        <p>{{user?.email}}</p>
+        <p>{{ user?.email }}</p>
       </div>
       <button class="base-button" (click)="openFormDialog()">Edit</button>
     </div>
@@ -33,15 +33,14 @@ export class Profile {
   }
 
   openFormDialog() {
-    if(!this.user)
-      return;
+    if (!this.user) return;
     const dialogRef = this.formDialog.open<UserInfo>(ProfileForm, {
       width: '400px',
-      data: {user: this.user}
+      data: { user: this.user },
     });
 
-    dialogRef.closed.subscribe(result => {
-      if(result){
+    dialogRef.closed.subscribe((result) => {
+      if (result) {
         this.user = this.userService.updateUser(result);
       }
     });

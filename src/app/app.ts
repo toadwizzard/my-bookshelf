@@ -6,13 +6,13 @@ import { AuthService } from './services/auth-service';
   selector: 'app-root',
   imports: [RouterOutlet, RouterLink],
   templateUrl: './app.html',
-  styleUrl: './app.css'
+  styleUrl: './app.css',
 })
 export class App {
   protected readonly title = signal('my-bookshelf');
   authService = inject(AuthService);
 
-  logout(){
-    this.authService.deleteId();
+  logout() {
+    this.authService.deleteToken();
   }
 }
