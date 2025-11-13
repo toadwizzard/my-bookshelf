@@ -6,6 +6,7 @@ import { environment } from '../../environments/environment';
 import { HttpClient } from '@angular/common/http';
 import { catchError, map, Observable, of } from 'rxjs';
 import { LoginResponse } from '../models/login-response';
+import { FormError } from '../helpers/form-error';
 
 interface UserInfoWithId extends UserInfo {
   id: number;
@@ -47,15 +48,25 @@ export class UserService {
     return !userWithUserName || userWithUserName.id === userId;
   }
 
-  register(user: UserInfo): number {
-    const newUser: UserInfoWithId = {
-      id: this.getLargesUserId() + 1,
-      username: user.username,
-      email: user.email,
-      password: user.password,
-    };
-    users.push(newUser);
-    return newUser.id;
+  register(user: UserInfo): Observable<boolean> {
+    return this.http
+      .post(`${environment.apiUrl}/register`, user, { responseType: 'text' })
+      .pipe(
+        map((res) => true),
+        catchError((err) => {
+          if (err.status === 400) {
+            const error = new FormError(
+              err.error?.message,
+              err.error?.errors?.map((e: { path: string; msg: string }) => ({
+                field: e.path,
+                message: e.msg,
+              })) ?? []
+            );
+            throw error;
+          }
+          throw err;
+        })
+      );
   }
 
   login(credentials: {
