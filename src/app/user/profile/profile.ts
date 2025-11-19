@@ -9,6 +9,9 @@ import { ProfileForm } from '../profile-form/profile-form';
   imports: [],
   template: `
     <div class="profile-container">
+      @if(loading){
+      <p>Loading...</p>
+      } @else {
       <div>
         <p>Username:</p>
         <p>{{ user?.username }}</p>
@@ -18,6 +21,7 @@ import { ProfileForm } from '../profile-form/profile-form';
         <p>{{ user?.email }}</p>
       </div>
       <button class="base-button" (click)="openFormDialog()">Edit</button>
+      }
     </div>
   `,
   styleUrl: `profile.css`,
@@ -25,11 +29,20 @@ import { ProfileForm } from '../profile-form/profile-form';
 export class Profile {
   userService = inject(UserService);
   user: UserInfo | undefined;
+  loading = false;
 
   formDialog = inject(Dialog);
 
   constructor() {
-    this.user = this.userService.getUser();
+    this.loading = true;
+    this.userService.getUser().subscribe({
+      next: (user) => {
+        this.user = user;
+      },
+      complete: () => {
+        this.loading = false;
+      },
+    });
   }
 
   openFormDialog() {

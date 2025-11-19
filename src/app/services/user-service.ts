@@ -3,10 +3,11 @@ import { UserInfo } from '../models/user-info';
 import { AuthService } from './auth-service';
 import { Router } from '@angular/router';
 import { environment } from '../../environments/environment';
-import { HttpClient } from '@angular/common/http';
-import { catchError, map, Observable, of } from 'rxjs';
+import { HttpClient, HttpContext } from '@angular/common/http';
+import { catchError, map, Observable } from 'rxjs';
 import { LoginResponse } from '../models/login-response';
 import { FormError } from '../helpers/form-error';
+import { AUTH_ENABLED } from '../interceptors/auth-interceptor';
 
 interface UserInfoWithId extends UserInfo {
   id: number;
@@ -35,11 +36,8 @@ export class UserService {
   router = inject(Router);
   http = inject(HttpClient);
 
-  getUser(): UserInfo | undefined {
-    const userId = this.handleAuthentication();
-    return userId !== undefined
-      ? users.find((user) => user.id === userId)
-      : undefined;
+  getUser(): Observable<UserInfo> {
+    return this.http.get<UserInfo>(`${environment.apiUrl}/profile`);
   }
 
   checkUsernameUnique(username: string): boolean {
@@ -50,7 +48,10 @@ export class UserService {
 
   register(user: UserInfo): Observable<boolean> {
     return this.http
-      .post(`${environment.apiUrl}/register`, user, { responseType: 'text' })
+      .post(`${environment.apiUrl}/register`, user, {
+        responseType: 'text',
+        context: new HttpContext().set(AUTH_ENABLED, false),
+      })
       .pipe(
         map((res) => true),
         catchError((err) => {
@@ -74,7 +75,9 @@ export class UserService {
     password: string;
   }): Observable<boolean> {
     return this.http
-      .post<LoginResponse>(`${environment.apiUrl}/login`, credentials)
+      .post<LoginResponse>(`${environment.apiUrl}/login`, credentials, {
+        context: new HttpContext().set(AUTH_ENABLED, false),
+      })
       .pipe(
         map((res) => {
           this.authService.setToken(res.token, res.expiresIn);
@@ -87,14 +90,11 @@ export class UserService {
       );
   }
 
-  private getLargesUserId(): number {
-    return users.reduce((acc, cur) => (acc.id < cur.id ? cur : acc)).id;
-  }
-
   checkPasswordMatches(password: string): boolean {
     const user = this.getUser();
     if (user === undefined) return false;
-    return user.password === password;
+    // return user.password === password;
+    return false;
   }
 
   updateUser(user: UserInfo): UserInfo | undefined {
