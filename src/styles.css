@@ -100,4 +100,5 @@ button.base-button.green:hover {
 
 p.loading {
   text-align: center;
+  color: var(--accent-color);
 }

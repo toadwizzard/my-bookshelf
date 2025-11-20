@@ -8,8 +8,7 @@ import { BookshelfTable } from './bookshelf-table/bookshelf-table';
 import { getOwnerNameFromBook, stringMatches } from '../../helpers/utils';
 import { Dialog } from '@angular/cdk/dialog';
 import { BookshelfFormDialog } from './bookshelf-form-dialog/bookshelf-form-dialog';
-import { BookStatus } from '../../models/shelved-book-info';
-import { ShelvedBookWithData } from '../../models/shelved-book-with-data';
+import { ShelvedBookInfo } from '../../models/shelved-book-info';
 
 @Component({
   selector: 'app-bookshelf',
@@ -26,13 +25,17 @@ import { ShelvedBookWithData } from '../../models/shelved-book-with-data';
           <span class="material-icons">add</span>
         </button>
       </div>
+      @if(loading) {
+      <p class="loading">Loading...</p>
+      } @else {
       <app-bookshelf-table
-        [books]="filteredBooks"
+        [books]="books"
         (edit)="openEditBookDialog($event, false)"
         (return)="returnBook($event)"
         (lend)="openEditBookDialog($event, true)"
         (delete)="deleteBook($event)"
       />
+      }
     </div>
   `,
   styleUrl: '../shared/shelf-styles.css',
@@ -40,15 +43,21 @@ import { ShelvedBookWithData } from '../../models/shelved-book-with-data';
 export class Bookshelf {
   bookService = inject(BookService);
   bookFilter = viewChild(BookshelfFilter);
-
-  books: ShelvedBookWithData[] = [];
-  filteredBooks: ShelvedBookWithData[] = [];
-
   bookFormDialog = inject(Dialog);
 
+  books: ShelvedBookInfo[] = [];
+  loading = false;
+
   constructor() {
-    this.books = this.bookService.getShelvedBooks();
-    this.filteredBooks = this.books;
+    this.loading = true;
+    this.bookService.getShelvedBooks().subscribe({
+      next: (shelf) => {
+        this.books = shelf.books;
+      },
+      complete: () => {
+        this.loading = false;
+      },
+    });
   }
 
   filterBooks(filterValues: BookshelfFilterValues) {

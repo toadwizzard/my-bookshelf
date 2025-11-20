@@ -5,8 +5,9 @@ import { UserService } from './user-service';
 import { BookResultInfo } from '../models/book-result-info';
 import { Observable } from 'rxjs';
 import { HttpClient } from '@angular/common/http';
-import { BookStatus, ShelvedBookInfo } from '../models/shelved-book-info';
-import { ShelvedBookWithData } from '../models/shelved-book-with-data';
+import { ShelvedBookInfo } from '../models/shelved-book-info';
+import { ShelvedBookData } from '../models/shelved-book-data';
+import { environment } from '../../environments/environment';
 
 export interface ShelvedBookInfoWithId extends ShelvedBookInfo {
   ownerId: number;
@@ -118,23 +119,16 @@ export class BookService {
   authService = inject(AuthService);
   http = inject(HttpClient);
 
-  getShelvedBooks(): ShelvedBookWithData[] {
-    const userId = this.handleAuthentication();
-    if (userId === undefined) return [];
-    return shelvedBooks
-      .filter(
-        (shelvedBook) =>
-          shelvedBook.ownerId === userId &&
-          shelvedBook.status !== BookStatus.Wishlist
-      )
-      .map((shelvedBook) => {
-        const bookData = books.find(
-          (book) => book.bookKey === shelvedBook.bookKey
-        );
-        if (!bookData) return undefined;
-        return { ...shelvedBook, ...bookData } as ShelvedBookWithData;
-      })
-      .filter(Boolean) as ShelvedBookWithData[];
+  getShelvedBooks(): Observable<{
+    books: ShelvedBookInfo[];
+    page: number;
+    last_page: number;
+  }> {
+    return this.http.get<{
+      books: ShelvedBookInfo[];
+      page: number;
+      last_page: number;
+    }>(`${environment.apiUrl}`);
   }
 
   getWishlistedBooks(): ShelvedBookWithData[] {

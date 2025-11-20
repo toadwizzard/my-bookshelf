@@ -4,8 +4,8 @@ import {
   getOwnerNameFromBook,
   getStatusFromBook,
 } from '../../../helpers/utils';
-import { BookStatus } from '../../../models/shelved-book-info';
-import { ShelvedBookWithData } from '../../../models/shelved-book-with-data';
+import { ShelvedBookInfo } from '../../../models/shelved-book-info';
+import { BookStatus } from '../../../helpers/book-status';
 
 @Component({
   selector: 'app-bookshelf-table',
@@ -44,18 +44,18 @@ import { ShelvedBookWithData } from '../../../models/shelved-book-with-data';
         </tr>
       </thead>
       <tbody>
-        @if(orderedBooks().length === 0){
+        @if(books().length === 0){
         <tr>
           <td class="empty-warning" colspan="5">
             No books to show. (Try adding a book first!)
           </td>
         </tr>
-        } @for (book of orderedBooks(); track $index) {
+        } @for (book of books(); track $index) {
         <tr>
-          <td>{{ getOwnerNameFromBook(book) }}</td>
+          <td>{{ book.owner_name }}</td>
           <td>{{ book.title }}</td>
-          <td>{{ book.author_name.join(', ') }}</td>
-          <td>{{ getStatusFromBook(book) }}</td>
+          <td>{{ book.author.join(', ') }}</td>
+          <td>{{ book.full_status }}</td>
           <td>
             <div class="action-button-container">
               @if (book.status === defaultStatus){
@@ -130,8 +130,8 @@ import { ShelvedBookWithData } from '../../../models/shelved-book-with-data';
 export class BookshelfTable {
   orderedByOwnerAsc = signal<true | false | undefined>(undefined);
   orderedByTitleAsc = signal<true | false | undefined>(undefined);
-  books = input<ShelvedBookWithData[]>([]);
-  orderedBooks = computed<ShelvedBookWithData[]>(() => {
+  books = input<ShelvedBookInfo[]>([]);
+  orderedBooks = computed<ShelvedBookInfo[]>(() => {
     if (this.orderedByOwnerAsc() !== undefined) return this.getOrderByOwner();
     if (this.orderedByTitleAsc() !== undefined) return this.getOrderByTitle();
     return this.books();
