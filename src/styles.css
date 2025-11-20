@@ -1,5 +1,5 @@
 /* You can add global styles to this file, and also import other style files */
-@import '@angular/cdk/overlay-prebuilt.css';
+@import "@angular/cdk/overlay-prebuilt.css";
 
 :root {
   --app-white: white;
@@ -10,7 +10,7 @@
   --accent-color: #5f1919;
   --accent-hover: rgb(168, 72, 72);
   --accent-disabled: rgb(126, 93, 93);
-  --app-green: #7B6824;
+  --app-green: #7b6824;
   --app-green-hover: #a7975d;
   --app-red: rgb(187, 2, 2);
   --app-red-hover: rgb(243, 83, 83);
@@ -96,4 +96,8 @@ button.base-button.green:hover {
 
 .dialog button.close:hover {
   background-color: var(--background-hover);
+}
+
+p.loading {
+  text-align: center;
 }

@@ -1,9 +1,10 @@
+import { KeyValuePipe } from '@angular/common';
 import { Component, input } from '@angular/core';
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
 
 @Component({
   selector: 'app-input-with-error',
-  imports: [ReactiveFormsModule],
+  imports: [ReactiveFormsModule, KeyValuePipe],
   template: `<div class="input-with-error-container">
     <div class="input-container">
       <label [for]="name()">{{ label() }}:</label>
@@ -14,9 +15,15 @@ import { FormControl, ReactiveFormsModule } from '@angular/forms';
         [formControl]="input()"
       />
     </div>
-    @if (input().hasError('fieldError') && input().touched && input().dirty) {
-    <p>{{ input().getError('fieldError') }}</p>
-    }
+    @if (input().invalid && input().touched && input().dirty) {
+    @if(input().hasError("required")){
+    <p>This field is required.</p>
+    } @if(input().hasError("email")){
+    <p>Invalid email format.</p>
+    } @for(error of input().errors | keyvalue; track error.key) { @if(typeof
+    error.value === "string"){
+    <p>{{ error.value }}</p>
+    } }}
   </div>`,
   styleUrl: '../form-styles.css',
 })

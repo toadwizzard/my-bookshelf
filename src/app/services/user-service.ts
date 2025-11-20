@@ -97,15 +97,26 @@ export class UserService {
     return false;
   }
 
-  updateUser(user: UserInfo): UserInfo | undefined {
-    const userId = this.handleAuthentication();
-    if (userId === undefined) return undefined;
-    const userIndex = users.findIndex((user) => user.id === userId);
-    if (userIndex < 0) return undefined;
-    users[userIndex].username = user.username;
-    users[userIndex].email = user.email;
-    if (user.password !== '') users[userIndex].password = user.password;
-    return users[userIndex];
+  updateUser(
+    user: UserInfo & { newPassword?: string; oldPassword: string }
+  ): Observable<UserInfo> {
+    return this.http
+      .patch<UserInfo>(`${environment.apiUrl}/profile`, user)
+      .pipe(
+        catchError((err) => {
+          if (err.status === 400) {
+            const error = new FormError(
+              err.error?.message,
+              err.error?.errors?.map((e: { path: string; msg: string }) => ({
+                field: e.path === 'newPassword' ? 'password' : e.path,
+                message: e.msg,
+              })) ?? []
+            );
+            throw error;
+          }
+          throw err;
+        })
+      );
   }
 
   //stand-in for proper 401 http response

@@ -17,7 +17,7 @@ nav a {
 }
 
 nav a:hover {
-  transform: scale(1.1) translate(0,-0.1rem);
+  transform: scale(1.1) translate(0, -0.1rem);
 }
 
 nav h1 {
@@ -26,7 +26,8 @@ nav h1 {
   margin: 0;
 }
 
-nav h1 a.title:hover, nav h1 a.title:focus {
+nav h1 a.title:hover,
+nav h1 a.title:focus {
   transform: none;
 }
 

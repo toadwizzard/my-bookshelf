@@ -18,12 +18,14 @@ button[type="submit"] {
   margin: 1rem auto 0;
 }
 
-input, select {
+input,
+select {
   box-sizing: border-box;
   width: 160px;
 }
 
-input:disabled, select:disabled {
+input:disabled,
+select:disabled {
   cursor: not-allowed;
 }
 
@@ -62,5 +64,5 @@ div.input-with-error-container div.input-container {
 
 .split-form-content > *:nth-child(2) {
   padding-left: 10px;
-  border-left: 2px solid var(--accent-color)
+  border-left: 2px solid var(--accent-color);
 }

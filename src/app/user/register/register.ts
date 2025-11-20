@@ -54,6 +54,8 @@ import { InputWithError } from '../../shared/input-with-error/input-with-error';
         <p class="error-msg">
           <span class="material-icons">error</span> {{ errorMsg }}
         </p>
+        } @if (loading) {
+        <p class="loading">Loading...</p>
         }
         <button
           type="submit"
@@ -72,6 +74,7 @@ export class Register {
   authService = inject(AuthService);
   router = inject(Router);
   errorMsg = '';
+  loading = false;
 
   registerForm = new FormGroup(
     {
@@ -96,6 +99,7 @@ export class Register {
       !this.registerForm.value.password
     )
       return;
+    this.loading = true;
     this.userService
       .register({
         username: this.registerForm.value.username,
@@ -116,8 +120,11 @@ export class Register {
           } else {
             this.errorMsg = err.message;
             this.registerForm.setErrors({ formError: true });
-            console.log(err);
           }
+          this.loading = false;
+        },
+        complete: () => {
+          this.loading = false;
         },
       });
   }

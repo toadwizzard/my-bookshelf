@@ -1,59 +1,72 @@
 import { DIALOG_DATA, DialogRef } from '@angular/cdk/dialog';
 import { Component, inject } from '@angular/core';
-import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
-import { matchingPasswordsValidator, uniqueUsernameValidator } from '../shared/user-form-validators';
+import {
+  FormControl,
+  FormGroup,
+  ReactiveFormsModule,
+  Validators,
+} from '@angular/forms';
+import { matchingPasswordsValidator } from '../shared/user-form-validators';
 import { UserService } from '../../services/user-service';
 import { UserInfo } from '../../models/user-info';
+import { InputWithError } from '../../shared/input-with-error/input-with-error';
+import { isFormError } from '../../helpers/form-error';
 
 @Component({
   selector: 'app-profile-form',
-  imports: [ReactiveFormsModule],
+  imports: [ReactiveFormsModule, InputWithError],
   host: {
-    'class': 'dialog',
+    class: 'dialog',
   },
   template: `
     <button (click)="cancel()" class="close">X</button>
     <h2>Edit user data</h2>
     <form [formGroup]="userForm" (submit)="submit()">
-      <div class="input-with-error-container">
-          <div class="input-container">
-            <label for="username">Username:</label>
-            <input type="text" id="username" placeholder="Username" formControlName="username">
-          </div>
-          @if (userForm.get('username')?.hasError('existingUsername') &&
-          userForm.get('username')?.touched && userForm.get('username')?.dirty) {
-            <p>Username already exists.</p>
-          }
-        </div>
-        <div class="input-container">
-          <label for="email">Email:</label>
-          <input type="email" id="email" placeholder="Email" formControlName="email">
-        </div>
-        <div class="input-with-error-container">
-          <div class="input-container">
-            <label for="oldPassword">Current password:</label>
-            <input type="password" id="oldPassword" placeholder="Current password" formControlName="oldPassword">
-          </div>
-          @if (userForm.get('oldPassword')?.hasError('incorrectPassword') &&
-          userForm.get('oldPassword')?.touched && userForm.get('oldPassword')?.dirty) {
-            <p>Incorrect password.</p>
-          }
-        </div>
-        <div class="input-container">
-          <label for="password">Password:</label>
-          <input type="password" id="password" placeholder="Password" formControlName="password">
-        </div>
-        <div class="input-with-error-container">
-          <div class="input-container">
-            <label for="password-confirm">Password again:</label>
-            <input type="password" id="password-confirm" placeholder="Password again" formControlName="passwordConfirm">
-          </div>
-          @if (userForm.get('passwordConfirm')?.hasError('passwordsNotMatch') &&
-          userForm.get('passwordConfirm')?.touched && userForm.get('passwordConfirm')?.dirty) {
-            <p>Passwords do not match.</p>
-          }
-        </div>
-      <button class="base-button" type="submit" [disabled]="!userForm.valid">Edit</button>
+      <app-input-with-error
+        name="username"
+        label="Username"
+        placeholder="Username"
+        type="text"
+        [input]="userForm.controls.username"
+      />
+      <app-input-with-error
+        name="email"
+        label="Email"
+        placeholder="Email"
+        type="email"
+        [input]="userForm.controls.email"
+      />
+      <app-input-with-error
+        name="old-password"
+        label="Current password"
+        placeholder="Current password"
+        type="password"
+        [input]="userForm.controls.oldPassword"
+      />
+      <app-input-with-error
+        name="new-password"
+        label="New password"
+        placeholder="New password"
+        type="password"
+        [input]="userForm.controls.password"
+      />
+      <app-input-with-error
+        name="password-confirm"
+        label="New password again"
+        placeholder="Password again"
+        type="password"
+        [input]="userForm.controls.passwordConfirm"
+      />
+      @if(userForm.hasError('formError')){
+      <p class="error-msg">
+        <span class="material-icons">error</span> {{ errorMsg }}
+      </p>
+      } @if (loading) {
+      <p class="loading">Loading...</p>
+      }
+      <button class="base-button" type="submit" [disabled]="!userForm.valid">
+        Edit
+      </button>
     </form>
   `,
   styleUrl: `../../shared/form-styles.css`,
@@ -61,42 +74,80 @@ import { UserInfo } from '../../models/user-info';
 export class ProfileForm {
   userService = inject(UserService);
   dialogRef = inject<DialogRef>(DialogRef);
-  data = inject<{user: UserInfo}>(DIALOG_DATA);
+  data = inject<{ user: UserInfo }>(DIALOG_DATA);
+  loading = false;
+  errorMsg = '';
+  isOpen = false;
 
-  userForm = new FormGroup({
-    username: new FormControl<string>('', [Validators.required, uniqueUsernameValidator(this.userService)]),
-    email: new FormControl<string>('', [Validators.email, Validators.required]),
-    oldPassword: new FormControl<string>('', [Validators.required]),
-    password: new FormControl<string>(''),
-    passwordConfirm: new FormControl<string>(''),
-  }, {validators: matchingPasswordsValidator()});
+  userForm = new FormGroup(
+    {
+      username: new FormControl<string>('', [
+        Validators.required,
+        // uniqueUsernameValidator(this.userService),
+      ]),
+      email: new FormControl<string>('', [
+        Validators.email,
+        Validators.required,
+      ]),
+      oldPassword: new FormControl<string>('', [Validators.required]),
+      password: new FormControl<string>(''),
+      passwordConfirm: new FormControl<string>(''),
+    },
+    { validators: matchingPasswordsValidator() }
+  );
 
   constructor() {
+    this.isOpen = true;
     this.userForm.patchValue({
       username: this.data.user.username,
-      email: this.data.user.email
+      email: this.data.user.email,
     });
   }
 
-  cancel(){
+  cancel() {
+    this.isOpen = false;
     this.dialogRef.close();
   }
 
-  submit(){
-    if(!this.userForm.valid ||
+  submit() {
+    if (
+      !this.userForm.valid ||
       !this.userForm.value.username ||
       !this.userForm.value.email ||
       !this.userForm.value.oldPassword
     )
       return;
-    if(!this.userService.checkPasswordMatches(this.userForm.value.oldPassword)){
-      this.userForm.get("oldPassword")?.setErrors({incorrectPassword: true});
-      return;
-    }
-    this.dialogRef.close({
+    const user = {
       username: this.userForm.value.username,
       email: this.userForm.value.email,
-      password: this.userForm.value.password ?? "",
+      oldPassword: this.userForm.value.oldPassword,
+      newPassword: this.userForm.value.password
+        ? this.userForm.value.password
+        : undefined,
+    };
+    this.loading = true;
+    this.userService.updateUser(user).subscribe({
+      next: (updatedUser) => {
+        this.isOpen = false;
+        this.dialogRef.close(updatedUser);
+      },
+      error: (err) => {
+        if (isFormError(err)) {
+          err.errors.forEach((error) => {
+            this.userForm
+              .get(error.field)
+              ?.setErrors({ fieldError: error.message });
+          });
+        } else {
+          this.errorMsg = err.message;
+          this.userForm.setErrors({ formError: true });
+        }
+        this.loading = false;
+      },
+      complete: () => {
+        this.loading = false;
+        if (this.isOpen) this.dialogRef.close();
+      },
     });
   }
 }

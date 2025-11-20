@@ -10,7 +10,7 @@ import { ProfileForm } from '../profile-form/profile-form';
   template: `
     <div class="profile-container">
       @if(loading){
-      <p>Loading...</p>
+      <p class="loading">Loading...</p>
       } @else {
       <div>
         <p>Username:</p>
@@ -54,7 +54,7 @@ export class Profile {
 
     dialogRef.closed.subscribe((result) => {
       if (result) {
-        this.user = this.userService.updateUser(result);
+        this.user = result;
       }
     });
   }

@@ -39,6 +39,8 @@ import {
           <p class="error-msg">
             <span class="material-icons">error</span> {{ errorMsg }}
           </p>
+          } @if (loading) {
+          <p class="loading">Loading...</p>
           }
           <button
             type="submit"
@@ -75,6 +77,7 @@ export class Login {
   authService = inject(AuthService);
   router = inject(Router);
   errorMsg: string = '';
+  loading = false;
 
   loginForm = new FormGroup({
     username: new FormControl<string>('', [Validators.required]),
@@ -86,6 +89,7 @@ export class Login {
       this.loginForm.setErrors({ invalidCredentials: true });
       return;
     }
+    this.loading = true;
     this.userService
       .login({
         username: this.loginForm.value.username,
@@ -102,6 +106,10 @@ export class Login {
         error: (err) => {
           this.errorMsg = err.message;
           this.loginForm.setErrors({ invalidCredentials: true });
+          this.loading = false;
+        },
+        complete: () => {
+          this.loading = false;
         },
       });
   }
