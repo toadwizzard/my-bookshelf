@@ -4,7 +4,7 @@ import { AuthService } from './auth-service';
 import { Router } from '@angular/router';
 import { environment } from '../../environments/environment';
 import { HttpClient, HttpContext } from '@angular/common/http';
-import { catchError, map, Observable } from 'rxjs';
+import { catchError, map, Observable, tap } from 'rxjs';
 import { LoginResponse } from '../models/login-response';
 import { FormError } from '../helpers/form-error';
 import { AUTH_ENABLED } from '../interceptors/auth-interceptor';
@@ -117,6 +117,16 @@ export class UserService {
           throw err;
         })
       );
+  }
+
+  deleteUser(): Observable<any> {
+    return this.http.delete(`${environment.apiUrl}/profile`).pipe(
+      tap({
+        next: (value) => {
+          this.authService.deleteToken();
+        },
+      })
+    );
   }
 
   //stand-in for proper 401 http response

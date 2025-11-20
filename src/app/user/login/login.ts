@@ -8,33 +8,30 @@ import {
   ReactiveFormsModule,
   Validators,
 } from '@angular/forms';
+import { InputWithError } from '../../shared/input-with-error/input-with-error';
 
 @Component({
   selector: 'app-login',
-  imports: [ReactiveFormsModule, RouterLink],
+  imports: [ReactiveFormsModule, RouterLink, InputWithError],
   template: `
     <div class="login-container">
       <div class="form-container">
         <h2>Log in</h2>
         <form [formGroup]="loginForm" (submit)="submit()">
-          <div class="input-container">
-            <label for="username">Username:</label>
-            <input
-              type="text"
-              id="username"
-              placeholder="Username"
-              formControlName="username"
-            />
-          </div>
-          <div class="input-container">
-            <label for="password">Password:</label>
-            <input
-              type="password"
-              id="password"
-              placeholder="Password"
-              formControlName="password"
-            />
-          </div>
+          <app-input-with-error
+            name="username"
+            label="Username"
+            placeholder="Username"
+            type="text"
+            [input]="loginForm.controls.username"
+          />
+          <app-input-with-error
+            name="password"
+            label="Password"
+            placeholder="Password"
+            type="password"
+            [input]="loginForm.controls.password"
+          />
           @if(loginForm.hasError('invalidCredentials')){
           <p class="error-msg">
             <span class="material-icons">error</span> {{ errorMsg }}
