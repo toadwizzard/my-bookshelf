@@ -49,6 +49,10 @@ export class Bookshelf {
   loading = false;
 
   constructor() {
+    this.getShelvedBooks();
+  }
+
+  getShelvedBooks() {
     this.loading = true;
     this.bookService.getShelvedBooks().subscribe({
       next: (shelf) => {
@@ -81,7 +85,7 @@ export class Bookshelf {
   }
 
   openAddBookDialog() {
-    const addBookDialogRef = this.bookFormDialog.open<ShelvedBookWithData>(
+    const addBookDialogRef = this.bookFormDialog.open<boolean>(
       BookshelfFormDialog,
       {
         width: '800px',
@@ -90,11 +94,7 @@ export class Bookshelf {
 
     addBookDialogRef.closed.subscribe((result) => {
       if (result) {
-        const addedBook = this.bookService.addShelvedBook(result);
-        if (addedBook) {
-          this.books.push(addedBook);
-          this.bookFilter()?.filterBooks();
-        }
+        this.getShelvedBooks();
       }
     });
   }

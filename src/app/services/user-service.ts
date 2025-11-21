@@ -90,13 +90,6 @@ export class UserService {
       );
   }
 
-  checkPasswordMatches(password: string): boolean {
-    const user = this.getUser();
-    if (user === undefined) return false;
-    // return user.password === password;
-    return false;
-  }
-
   updateUser(
     user: UserInfo & { newPassword?: string; oldPassword: string }
   ): Observable<UserInfo> {

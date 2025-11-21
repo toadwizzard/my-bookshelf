@@ -11,7 +11,7 @@ import { FormControl, ReactiveFormsModule } from '@angular/forms';
       <input
         [type]="type()"
         [id]="name()"
-        [placeholder]="placeholder()"
+        [attr.placeholder]="placeholder() ?? null"
         [formControl]="input()"
       />
     </div>
@@ -32,5 +32,5 @@ export class InputWithError {
   name = input.required<string>();
   label = input.required<string>();
   type = input.required<string>();
-  placeholder = input.required<string>();
+  placeholder = input<string>();
 }

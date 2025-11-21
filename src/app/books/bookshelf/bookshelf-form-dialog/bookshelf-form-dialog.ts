@@ -1,6 +1,5 @@
 import { DIALOG_DATA, DialogRef } from '@angular/cdk/dialog';
 import { Component, inject } from '@angular/core';
-import { BookInfo } from '../../../models/book-info';
 import {
   FormControl,
   FormGroup,
@@ -9,12 +8,16 @@ import {
 } from '@angular/forms';
 import { formatDate } from '@angular/common';
 import { BookSearch } from '../../book-search/book-search';
-import { BookStatus } from '../../../models/shelved-book-info';
-import { ShelvedBookWithData } from '../../../models/shelved-book-with-data';
+import { ShelvedBookData } from '../../../models/shelved-book-data';
+import { BookStatus } from '../../../helpers/book-status';
+import { BookService } from '../../../services/book-service';
+import { BookResultInfo } from '../../../models/book-result-info';
+import { InputWithError } from '../../../shared/input-with-error/input-with-error';
+import { isFormError } from '../../../helpers/form-error';
 
 @Component({
   selector: 'app-bookshelf-form-dialog',
-  imports: [ReactiveFormsModule, BookSearch],
+  imports: [ReactiveFormsModule, BookSearch, InputWithError],
   host: {
     class: 'dialog',
   },
@@ -25,13 +28,16 @@ import { ShelvedBookWithData } from '../../../models/shelved-book-with-data';
     </h2>
     <form [formGroup]="bookForm" (submit)="submitForm()">
       <div class="split-form-content">
-        <app-book-search formControlName="bookData" />
+        <app-book-search
+          formControlName="bookData"
+          [error]="bookForm.get('bookData')?.getError('fieldError')"
+        />
         <div>
           <div class="input-container">
-            <label for="owner">{{ isEditing ? 'Status' : 'Add to:' }}</label>
-            <select id="owner" formControlName="owner">
-              @for (owner of ownerOptions; track $index){
-              <option [ngValue]="owner.value">{{ owner.text }}</option>
+            <label for="status">{{ isEditing ? 'Status' : 'Add to:' }}</label>
+            <select id="status" formControlName="status">
+              @for (status of statusOptions; track $index){
+              <option [ngValue]="status.value">{{ status.text }}</option>
               } @if (isEditing) {
               <option [ngValue]="lentStatus">Lent</option>
               }
@@ -39,45 +45,32 @@ import { ShelvedBookWithData } from '../../../models/shelved-book-with-data';
           </div>
           @if(!ownerMe){
           <div>
-            <div class="input-container">
-              <label for="otherName"
-                >{{
-                  isLend ? 'Lend to' : isLent ? 'Lent to' : 'Owner name'
-                }}
-                (optional):</label
-              >
-              <input
-                type="text"
-                id="otherName"
-                formControlName="otherName"
-                [placeholder]="
-                  isLend ? 'Lend to' : isLent ? 'Lent to' : 'Owner name'
-                "
-              />
-            </div>
-            <div class="input-container">
-              <label for="sinceDueDate"
-                >{{
-                  isLend
-                    ? 'Lend on'
-                    : isLent
-                    ? 'Lent on'
-                    : isDue
-                    ? 'Due'
-                    : 'Borrowed on'
-                }}
-                (optional):</label
-              >
-              <input
-                type="date"
-                id="sinceDueDate"
-                formControlName="sinceDueDate"
-              />
-            </div>
+            <app-input-with-error
+              name="otherName"
+              [label]="otherNameLabel"
+              [placeholder]="
+                isLend ? 'Lend to' : isLent ? 'Lent to' : 'Owner name'
+              "
+              type="text"
+              [input]="bookForm.controls.other_name"
+            />
+            <app-input-with-error
+              name="date"
+              [label]="dateLabel"
+              type="date"
+              [input]="bookForm.controls.date"
+            />
           </div>
           }
         </div>
       </div>
+      @if(bookForm.hasError('formError')){
+      <p class="error-msg">
+        <span class="material-icons">error</span> {{ errorMsg }}
+      </p>
+      } @if (loading) {
+      <p class="loading">Loading...</p>
+      }
       <button class="base-button" type="submit" [disabled]="!bookForm.valid">
         {{ isLend ? 'Lend' : isEditing ? 'Edit' : 'Add' }}
       </button>
@@ -86,27 +79,26 @@ import { ShelvedBookWithData } from '../../../models/shelved-book-with-data';
   styleUrl: `../../../shared/form-styles.css`,
 })
 export class BookshelfFormDialog {
-  dialogRef = inject<DialogRef<ShelvedBookWithData>>(
-    DialogRef<ShelvedBookWithData>
+  dialogRef = inject<DialogRef<boolean>>(DialogRef<boolean>);
+  data = inject<{ shelvedBook: ShelvedBookData; isLend: boolean } | undefined>(
+    DIALOG_DATA
   );
-  data = inject<
-    { shelvedBook: ShelvedBookWithData; isLend: boolean } | undefined
-  >(DIALOG_DATA);
+  bookService = inject(BookService);
 
   bookForm = new FormGroup({
-    bookData: new FormControl<BookInfo | undefined>(undefined, [
+    bookData: new FormControl<BookResultInfo | undefined>(undefined, [
       Validators.required,
     ]),
-    owner: new FormControl<
+    status: new FormControl<
       | BookStatus.Default
       | BookStatus.Borrowed
       | BookStatus.LibraryBorrowed
       | BookStatus.Lent
     >(BookStatus.Default),
-    otherName: new FormControl<string>(''),
-    sinceDueDate: new FormControl<string>(''),
+    other_name: new FormControl<string>(''),
+    date: new FormControl<string>(''),
   });
-  ownerOptions = [
+  statusOptions = [
     {
       value: BookStatus.Default,
       text: 'My shelf',
@@ -124,43 +116,65 @@ export class BookshelfFormDialog {
   isLend: boolean = false;
 
   get ownerMe(): boolean {
-    return this.bookForm.value.owner === BookStatus.Default;
+    return this.bookForm.value.status === BookStatus.Default;
   }
   get isDue(): boolean {
-    return this.bookForm.value.owner === BookStatus.LibraryBorrowed;
+    return this.bookForm.value.status === BookStatus.LibraryBorrowed;
   }
   get isLent(): boolean {
-    return this.bookForm.value.owner === BookStatus.Lent;
+    return this.bookForm.value.status === BookStatus.Lent;
   }
 
   get lentStatus() {
     return BookStatus.Lent;
   }
 
+  get otherNameLabel(): string {
+    return `${
+      this.isLend ? 'Lend to' : this.isLent ? 'Lent to' : 'Owner name'
+    } (optional)`;
+  }
+  get dateLabel(): string {
+    return `${
+      this.isLend
+        ? 'Lend on'
+        : this.isLent
+        ? 'Lent on'
+        : this.isDue
+        ? 'Due'
+        : 'Borrowed on'
+    } (optional)`;
+  }
+
+  loading = false;
+  errorMsg = '';
+  isOpen = false;
+
   constructor() {
+    this.isOpen = true;
     this.isEditing = !!this.data;
     this.isLend = !!this.data?.isLend;
     if (this.data) {
-      const shelvedBook: ShelvedBookWithData = this.data.shelvedBook;
+      const shelvedBook: ShelvedBookData = this.data.shelvedBook;
       this.bookForm.patchValue({
         bookData: {
-          bookKey: shelvedBook.bookKey,
+          key: shelvedBook.book_key,
           title: shelvedBook.title,
-          author_name: shelvedBook.author_name,
+          author_name: shelvedBook.author,
         },
-        owner: this.isLend
+        status: this.isLend
           ? BookStatus.Lent
           : shelvedBook.status === BookStatus.Wishlist
           ? BookStatus.Default
           : shelvedBook.status,
-        otherName: shelvedBook.otherName,
-        sinceDueDate: shelvedBook.date
+        other_name: shelvedBook.other_name,
+        date: shelvedBook.date
           ? formatDate(shelvedBook.date, 'y-MM-dd', 'en-US')
           : '',
       });
       if (this.isLend) {
         this.bookForm.get('bookData')?.disable();
-        this.bookForm.get('owner')?.disable();
+        this.bookForm.get('status')?.disable();
       }
     }
   }
@@ -171,26 +185,42 @@ export class BookshelfFormDialog {
 
   submitForm() {
     if (this.bookForm.valid) {
-      let otherName, date;
-      if (
-        this.bookForm.value.owner === BookStatus.Default ||
-        !this.bookForm.getRawValue().owner
-      ) {
-        otherName = undefined;
-        date = undefined;
-      } else {
-        otherName = this.bookForm.value.otherName;
-        date = this.bookForm.value.sinceDueDate;
-      }
       const bookData = this.bookForm.getRawValue().bookData;
-      this.dialogRef.close({
-        id: -1,
-        bookKey: bookData ? bookData.bookKey : '',
-        title: bookData ? bookData.title : '',
-        author_name: bookData ? bookData.author_name : [],
-        otherName: otherName,
-        status: this.bookForm.getRawValue().owner ?? BookStatus.Default,
-        date: date ? new Date(date) : undefined,
+      const addedBook: ShelvedBookData = {
+        book_key: bookData ? bookData.key ?? '' : '',
+        status: this.bookForm.getRawValue().status ?? BookStatus.Default,
+      };
+      if (this.bookForm.value.other_name) {
+        addedBook.other_name = this.bookForm.value.other_name;
+      }
+      if (this.bookForm.value.date) {
+        addedBook.date = new Date(this.bookForm.value.date);
+      }
+      this.loading = true;
+      this.bookService.addShelvedBook(addedBook).subscribe({
+        next: (value) => {
+          if (value) {
+            this.isOpen = false;
+            this.dialogRef.close(value);
+          }
+        },
+        error: (err) => {
+          if (isFormError(err)) {
+            err.errors.forEach((error) => {
+              this.bookForm
+                .get(error.field)
+                ?.setErrors({ fieldError: error.message });
+            });
+          } else {
+            this.errorMsg = err.message;
+            this.bookForm.setErrors({ formError: true });
+          }
+          this.loading = false;
+        },
+        complete: () => {
+          this.loading = false;
+          if (this.isOpen) this.dialogRef.close();
+        },
       });
     }
   }

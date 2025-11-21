@@ -3,11 +3,13 @@ import { BookInfo } from '../models/book-info';
 import { AuthService } from './auth-service';
 import { UserService } from './user-service';
 import { BookResultInfo } from '../models/book-result-info';
-import { Observable } from 'rxjs';
+import { catchError, map, Observable } from 'rxjs';
 import { HttpClient } from '@angular/common/http';
 import { ShelvedBookInfo } from '../models/shelved-book-info';
 import { ShelvedBookData } from '../models/shelved-book-data';
 import { environment } from '../../environments/environment';
+import { FormError } from '../helpers/form-error';
+import { formatDate } from '@angular/common';
 
 export interface ShelvedBookInfoWithId extends ShelvedBookInfo {
   ownerId: number;
@@ -163,51 +165,30 @@ export class BookService {
     return shelvedBook && book ? { ...shelvedBook, ...book } : undefined;
   }
 
-  private getLargestShelvedBookId(): number {
-    return shelvedBooks.reduce((acc, cur) => (acc.id < cur.id ? cur : acc), {
-      id: 0,
-    }).id;
-  }
-
-  addShelvedBook(
-    shelvedBook: ShelvedBookWithData
-  ): ShelvedBookWithData | undefined {
-    const userId = this.handleAuthentication();
-    if (userId === undefined) return undefined;
-    let otherName, date;
-    if (
-      shelvedBook.status === BookStatus.Default ||
-      shelvedBook.status === BookStatus.Wishlist
-    ) {
-      otherName = undefined;
-      date = undefined;
-    } else {
-      otherName = shelvedBook.otherName;
-      date = shelvedBook.date;
-    }
-    if (!this.bookWithKeyExists(shelvedBook.bookKey)) {
-      books.push({
-        bookKey: shelvedBook.bookKey,
-        title: shelvedBook.title,
-        author_name: shelvedBook.author_name,
-      });
-    }
-    const shelvedBookId = this.getLargestShelvedBookId() + 1;
-    const newShelvedBook: ShelvedBookInfo = {
-      id: shelvedBookId,
-      bookKey: shelvedBook.bookKey,
-      otherName: otherName,
-      status: shelvedBook.status,
-      date: date,
+  addShelvedBook(newBook: ShelvedBookData): Observable<boolean> {
+    const { date, ...bookWithoutDate } = newBook;
+    const book: Omit<ShelvedBookData, 'date'> & { date?: string } = {
+      ...bookWithoutDate,
     };
-    shelvedBooks.push({
-      ...newShelvedBook,
-      ownerId: userId,
-    });
-    return {
-      ...shelvedBook,
-      id: shelvedBookId,
-    };
+    if (newBook.date) {
+      book.date = formatDate(newBook.date, 'y-MM-dd', 'en-US');
+    }
+    return this.http.post(`${environment.apiUrl}`, book).pipe(
+      map((res) => true),
+      catchError((err) => {
+        if (err.status === 400) {
+          const error = new FormError(
+            err.error?.message,
+            err.error?.errors?.map((e: { path: string; msg: string }) => ({
+              field: e.path === 'book_key' ? 'bookData' : e.path,
+              message: e.msg,
+            })) ?? []
+          );
+          throw error;
+        }
+        throw err;
+      })
+    );
   }
 
   updateShelvedBook(
@@ -263,7 +244,7 @@ export class BookService {
   searchBooks(query: string): Observable<{ docs: BookResultInfo[] }> {
     const searchQuery = encodeURI(query);
     return this.http.get<{ docs: BookResultInfo[] }>(
-      `${this.OL_BASE_URL}/search.json?q=${searchQuery}&fields=key,title,author_name`
+      `${environment.apiUrl}/search?q=${searchQuery}`
     );
   }
 
