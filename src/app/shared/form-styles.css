@@ -44,15 +44,6 @@ div.input-with-error-container div.input-container {
   margin-bottom: 0.2rem;
 }
 
-.error-msg {
-  color: var(--app-red);
-}
-
-.error-msg span.material-icons {
-  font-size: 18px;
-  vertical-align: bottom;
-}
-
 .split-form-content {
   display: flex;
   justify-content: space-between;

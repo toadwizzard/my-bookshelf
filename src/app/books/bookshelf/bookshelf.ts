@@ -27,7 +27,11 @@ import { ShelvedBookInfo } from '../../models/shelved-book-info';
       </div>
       @if(loading) {
       <p class="loading">Loading...</p>
-      } @else {
+      } @else { @if(isError) {
+      <p class="error-msg">
+        <span class="material-icons">error</span> {{ errorMsg }}
+      </p>
+      }
       <app-bookshelf-table
         [books]="books"
         (edit)="openEditBookDialog($event, false)"
@@ -47,12 +51,15 @@ export class Bookshelf {
 
   books: ShelvedBookInfo[] = [];
   loading = false;
+  isError = false;
+  errorMsg = '';
 
   constructor() {
     this.getShelvedBooks();
   }
 
   getShelvedBooks() {
+    this.isError = false;
     this.loading = true;
     this.bookService.getShelvedBooks().subscribe({
       next: (shelf) => {
@@ -99,64 +106,68 @@ export class Bookshelf {
     });
   }
 
-  openEditBookDialog(id: number, isLend: boolean) {
-    const book = this.bookService.getShelvedBookById(id);
-    if (!book) return;
-    const editBookDialogRef = this.bookFormDialog.open<ShelvedBookWithData>(
+  openEditBookDialog(id: string, isLend: boolean) {
+    const editBookDialogRef = this.bookFormDialog.open<boolean>(
       BookshelfFormDialog,
       {
         width: '800px',
-        data: { shelvedBook: book, isLend },
+        data: { shelvedBookId: id, isLend },
       }
     );
-
     editBookDialogRef.closed.subscribe((result) => {
-      if (
-        result &&
-        (book.title !== result.title ||
-          book.status !== result.status ||
-          book.otherName !== result.otherName ||
-          book.date !== result.date)
-      ) {
-        result.id = book.id;
-        const editedBook = this.bookService.updateShelvedBook(result);
-        if (editedBook) {
-          const modifiedIndex = this.findBookIndex(editedBook);
-          if (modifiedIndex >= 0) {
-            this.books[modifiedIndex] = editedBook;
-            this.bookFilter()?.filterBooks();
-          }
-        }
+      if (result) {
+        this.getShelvedBooks();
       }
     });
   }
 
-  returnBook(id: number) {
-    const originalBook = this.bookService.getShelvedBookById(id);
-    if (!originalBook || originalBook.status !== BookStatus.Lent) return;
-    const returnedBook = this.bookService.updateShelvedBook({
+  returnBook(id: string) {
+    this.loading = true;
+    this.bookService.getShelvedBookById(id).subscribe({
+      next: (originalBook) => {
+        if (originalBook.status === BookStatus.Lent) {
+          this.bookService
+            .updateShelvedBook(id, {
       ...originalBook,
       status: BookStatus.Default,
-      otherName: undefined,
+              other_name: undefined,
       date: undefined,
+            })
+            .subscribe({
+              next: (result) => {
+                if (result) {
+                  this.getShelvedBooks();
+                }
+              },
+              error: (err) => {
+                this.loading = false;
+                this.isError = true;
+                this.errorMsg = `Could not return book: ${err.message}`;
+              },
+            });
+        }
+      },
+      error: (err) => {
+        this.loading = false;
+        this.isError = true;
+        this.errorMsg = `Could not return book: ${err.message}`;
+      },
     });
-    if (returnedBook) {
-      const returnedIndex = this.findBookIndex(returnedBook);
-      if (returnedIndex >= 0) {
-        this.books[returnedIndex] = returnedBook;
-        this.bookFilter()?.filterBooks();
-      }
-    }
   }
 
-  deleteBook(id: number) {
-    if (this.bookService.deleteShelvedBook(id)) {
-      this.books = this.bookService.getShelvedBooks();
-      this.bookFilter()?.filterBooks();
-    }
-  }
-
-  private findBookIndex(book: ShelvedBookWithData): number {
-    return this.books.findIndex((bk) => bk.id === book.id);
+  deleteBook(id: string) {
+    this.loading = true;
+    this.bookService.deleteShelvedBook(id).subscribe({
+      next: (value) => {
+        if (value) {
+          this.getShelvedBooks();
+        }
+      },
+      error: (err) => {
+        this.loading = false;
+        this.isError = true;
+        this.errorMsg = `Could not remove book from list: ${err.message}`;
+      },
+    });
   }
 }

@@ -136,10 +136,10 @@ export class BookshelfTable {
     if (this.orderedByTitleAsc() !== undefined) return this.getOrderByTitle();
     return this.books();
   });
-  delete = output<number>();
-  edit = output<number>();
-  lend = output<number>();
-  return = output<number>();
+  delete = output<string>();
+  edit = output<string>();
+  lend = output<string>();
+  return = output<string>();
 
   get defaultStatus() {
     return BookStatus.Default;
@@ -191,19 +191,19 @@ export class BookshelfTable {
     );
   }
 
-  editBook(id: number) {
+  editBook(id: string) {
     this.edit.emit(id);
   }
 
-  returnBook(id: number) {
+  returnBook(id: string) {
     this.return.emit(id);
   }
 
-  lendBook(id: number) {
+  lendBook(id: string) {
     this.lend.emit(id);
   }
 
-  deleteBook(id: number) {
+  deleteBook(id: string) {
     this.delete.emit(id);
   }
 }

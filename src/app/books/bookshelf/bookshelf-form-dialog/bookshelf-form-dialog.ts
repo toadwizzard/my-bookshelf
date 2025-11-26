@@ -26,6 +26,13 @@ import { isFormError } from '../../../helpers/form-error';
     <h2>
       {{ isLend ? 'Lend book' : isEditing ? 'Edit book' : 'Add new book' }}
     </h2>
+    @if(getLoading) {
+    <p class="loading">Loading...</p>
+    } @else if (isGetError) {
+    <p class="error-msg">
+      <span class="material-icons">error</span> {{ errorMsg }}
+    </p>
+    } @else {
     <form [formGroup]="bookForm" (submit)="submitForm()">
       <div class="split-form-content">
         <app-book-search
@@ -68,19 +75,20 @@ import { isFormError } from '../../../helpers/form-error';
       <p class="error-msg">
         <span class="material-icons">error</span> {{ errorMsg }}
       </p>
-      } @if (loading) {
+      } @if (postLoading) {
       <p class="loading">Loading...</p>
       }
       <button class="base-button" type="submit" [disabled]="!bookForm.valid">
         {{ isLend ? 'Lend' : isEditing ? 'Edit' : 'Add' }}
       </button>
     </form>
+    }
   `,
   styleUrl: `../../../shared/form-styles.css`,
 })
 export class BookshelfFormDialog {
   dialogRef = inject<DialogRef<boolean>>(DialogRef<boolean>);
-  data = inject<{ shelvedBook: ShelvedBookData; isLend: boolean } | undefined>(
+  data = inject<{ shelvedBookId: string; isLend: boolean } | undefined>(
     DIALOG_DATA
   );
   bookService = inject(BookService);
@@ -146,7 +154,9 @@ export class BookshelfFormDialog {
     } (optional)`;
   }
 
-  loading = false;
+  postLoading = false;
+  getLoading = false;
+  isGetError = false;
   errorMsg = '';
   isOpen = false;
 
@@ -155,27 +165,44 @@ export class BookshelfFormDialog {
     this.isEditing = !!this.data;
     this.isLend = !!this.data?.isLend;
     if (this.data) {
-      const shelvedBook: ShelvedBookData = this.data.shelvedBook;
-      this.bookForm.patchValue({
-        bookData: {
-          key: shelvedBook.book_key,
-          title: shelvedBook.title,
-          author_name: shelvedBook.author,
+      this.getLoading = true;
+      this.bookService.getShelvedBookById(this.data.shelvedBookId).subscribe({
+        next: (shelvedBook) => {
+          this.bookForm.patchValue({
+            bookData: {
+              key: shelvedBook.book_key,
+              title: shelvedBook.title,
+              author_name: shelvedBook.author,
+            },
+            status: this.isLend
+              ? BookStatus.Lent
+              : shelvedBook.status === BookStatus.Wishlist
+              ? BookStatus.Default
+              : shelvedBook.status,
+            other_name: shelvedBook.other_name,
+            date: shelvedBook.date
+              ? formatDate(shelvedBook.date, 'y-MM-dd', 'en-US')
+              : '',
+          });
+          if (this.isLend) {
+            this.bookForm.get('bookData')?.disable();
+            this.bookForm.get('status')?.disable();
+          }
+          this.getLoading = false;
         },
-        status: this.isLend
-          ? BookStatus.Lent
-          : shelvedBook.status === BookStatus.Wishlist
-          ? BookStatus.Default
-          : shelvedBook.status,
-        other_name: shelvedBook.other_name,
-        date: shelvedBook.date
-          ? formatDate(shelvedBook.date, 'y-MM-dd', 'en-US')
-          : '',
+        error: (err) => {
+          this.errorMsg = err.message;
+          this.isGetError = true;
+          this.getLoading = false;
+        },
+        complete: () => {
+          if (this.getLoading) {
+            // 401 error handled by interceptor
+            this.isOpen = false;
+            this.cancel();
+          }
+        },
       });
-      if (this.isLend) {
-        this.bookForm.get('bookData')?.disable();
-        this.bookForm.get('status')?.disable();
-      }
     }
   }
 
@@ -186,18 +213,25 @@ export class BookshelfFormDialog {
   submitForm() {
     if (this.bookForm.valid) {
       const bookData = this.bookForm.getRawValue().bookData;
-      const addedBook: ShelvedBookData = {
+      const book: ShelvedBookData = {
         book_key: bookData ? bookData.key ?? '' : '',
         status: this.bookForm.getRawValue().status ?? BookStatus.Default,
       };
       if (this.bookForm.value.other_name) {
-        addedBook.other_name = this.bookForm.value.other_name;
+        book.other_name = this.bookForm.value.other_name;
       }
       if (this.bookForm.value.date) {
-        addedBook.date = new Date(this.bookForm.value.date);
+        book.date = new Date(this.bookForm.value.date);
       }
-      this.loading = true;
-      this.bookService.addShelvedBook(addedBook).subscribe({
+      this.postLoading = true;
+      let serviceMethod;
+      if (this.isEditing)
+        serviceMethod = this.bookService.updateShelvedBook(
+          this.data?.shelvedBookId ?? '',
+          book
+        );
+      else serviceMethod = this.bookService.addShelvedBook(book);
+      serviceMethod.subscribe({
         next: (value) => {
           if (value) {
             this.isOpen = false;
@@ -215,10 +249,10 @@ export class BookshelfFormDialog {
             this.errorMsg = err.message;
             this.bookForm.setErrors({ formError: true });
           }
-          this.loading = false;
+          this.postLoading = false;
         },
         complete: () => {
-          this.loading = false;
+          this.postLoading = false;
           if (this.isOpen) this.dialogRef.close();
         },
       });

@@ -102,3 +102,13 @@ p.loading {
   text-align: center;
   color: var(--accent-color);
 }
+
+.error-msg {
+  color: var(--app-red);
+  text-align: center;
+}
+
+.error-msg span.material-icons {
+  font-size: 18px;
+  vertical-align: bottom;
+}

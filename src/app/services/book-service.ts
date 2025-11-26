@@ -152,27 +152,14 @@ export class BookService {
       .filter(Boolean) as ShelvedBookWithData[];
   }
 
-  getShelvedBookById(bookId: number): ShelvedBookWithData | undefined {
-    const userId = this.handleAuthentication();
-    if (userId === undefined) return undefined;
-    const shelvedBook: ShelvedBookInfo | undefined = shelvedBooks.find(
-      (shelvedBook) =>
-        shelvedBook.id === bookId && shelvedBook.ownerId === userId
+  getShelvedBookById(bookId: string): Observable<ShelvedBookData> {
+    return this.http.get<ShelvedBookData>(
+      `${environment.apiUrl}/book/${bookId}`
     );
-    const book: BookInfo | undefined = books.find(
-      (book) => book.bookKey === shelvedBook?.bookKey
-    );
-    return shelvedBook && book ? { ...shelvedBook, ...book } : undefined;
   }
 
   addShelvedBook(newBook: ShelvedBookData): Observable<boolean> {
-    const { date, ...bookWithoutDate } = newBook;
-    const book: Omit<ShelvedBookData, 'date'> & { date?: string } = {
-      ...bookWithoutDate,
-    };
-    if (newBook.date) {
-      book.date = formatDate(newBook.date, 'y-MM-dd', 'en-US');
-    }
+    const book = this.formatBookDate(newBook);
     return this.http.post(`${environment.apiUrl}`, book).pipe(
       map((res) => true),
       catchError((err) => {
@@ -192,53 +179,32 @@ export class BookService {
   }
 
   updateShelvedBook(
-    shelvedBook: ShelvedBookWithData
-  ): ShelvedBookWithData | undefined {
-    const userId = this.handleAuthentication();
-    if (userId === undefined) return undefined;
-    const bookIndex = shelvedBooks.findIndex(
-      (bk) => bk.ownerId === userId && bk.id === shelvedBook.id
-    );
-    if (bookIndex >= 0) {
-      if (!this.bookWithKeyExists(shelvedBook.bookKey)) {
-        books.push({
-          bookKey: shelvedBook.bookKey,
-          title: shelvedBook.title,
-          author_name: shelvedBook.author_name,
-        });
-      }
-      shelvedBooks[bookIndex].bookKey = shelvedBook.bookKey;
-      shelvedBooks[bookIndex].status = shelvedBook.status;
-      if (
-        shelvedBook.status === BookStatus.Default ||
-        shelvedBook.status === BookStatus.Wishlist
-      ) {
-        shelvedBooks[bookIndex].otherName = undefined;
-        shelvedBooks[bookIndex].date = undefined;
-      } else {
-        shelvedBooks[bookIndex].otherName = shelvedBook.otherName;
-        shelvedBooks[bookIndex].date = shelvedBook.date;
-      }
-      return {
-        ...shelvedBooks[bookIndex],
-        title: shelvedBook.title,
-        author_name: shelvedBook.author_name,
-      };
+    bookId: string,
+    shelvedBook: ShelvedBookData
+  ): Observable<boolean> {
+    const book = this.formatBookDate(shelvedBook);
+    return this.http.patch(`${environment.apiUrl}/book/${bookId}`, book).pipe(
+      map((res) => true),
+      catchError((err) => {
+        if (err.status === 400) {
+          const error = new FormError(
+            err.error?.message,
+            err.error?.errors?.map((e: { path: string; msg: string }) => ({
+              field: e.path === 'book_key' ? 'bookData' : e.path,
+              message: e.msg,
+            })) ?? []
+          );
+          throw error;
     }
-    return undefined;
+        throw err;
+      })
+    );
   }
 
-  deleteShelvedBook(shelvedBookId: number): boolean {
-    const userId = this.handleAuthentication();
-    if (userId === undefined) return false;
-    const bookIndex = shelvedBooks.findIndex(
-      (book) => book.ownerId === userId && book.id === shelvedBookId
-    );
-    if (bookIndex >= 0) {
-      shelvedBooks.splice(bookIndex, 1);
-      return true;
-    }
-    return false;
+  deleteShelvedBook(shelvedBookId: string): Observable<boolean> {
+    return this.http
+      .delete(`${environment.apiUrl}/book/${shelvedBookId}`)
+      .pipe(map((res) => true));
   }
 
   searchBooks(query: string): Observable<{ docs: BookResultInfo[] }> {
@@ -248,13 +214,16 @@ export class BookService {
     );
   }
 
-  private bookWithKeyExists(bookKey: string): boolean {
-    return books.some((book) => book.bookKey === bookKey);
-  }
-
-  //stand in for 401 http responses
-  userService = inject(UserService);
-  private handleAuthentication(): number | undefined {
-    return this.userService.handleAuthentication();
+  private formatBookDate(
+    book: ShelvedBookData
+  ): Omit<ShelvedBookData, 'date'> & { date?: string } {
+    const { date, ...bookWithoutDate } = book;
+    const formattedBook: Omit<ShelvedBookData, 'date'> & { date?: string } = {
+      ...bookWithoutDate,
+    };
+    if (book.date) {
+      formattedBook.date = formatDate(book.date, 'y-MM-dd', 'en-US');
+    }
+    return formattedBook;
   }
 }
