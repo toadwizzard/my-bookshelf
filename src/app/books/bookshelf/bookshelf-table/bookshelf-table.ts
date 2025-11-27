@@ -1,11 +1,8 @@
 import { NgClass } from '@angular/common';
-import { Component, computed, input, output, signal } from '@angular/core';
-import {
-  getOwnerNameFromBook,
-  getStatusFromBook,
-} from '../../../helpers/utils';
+import { Component, input, model, output } from '@angular/core';
 import { ShelvedBookInfo } from '../../../models/shelved-book-info';
 import { BookStatus } from '../../../helpers/book-status';
+import { BookOrderValues } from '../../../models/book-order-values';
 
 @Component({
   selector: 'app-bookshelf-table',
@@ -17,8 +14,8 @@ import { BookStatus } from '../../../helpers/book-status';
           <th
             class="orderable owner"
             [ngClass]="{
-              orderAscend: orderedByOwnerAsc(),
-              orderDescend: orderedByOwnerAsc() === false
+              orderAscend: orderedByOwnerAsc,
+              orderDescend: orderedByOwnerAsc === false
             }"
             (click)="orderByOwner()"
             (keyup.enter)="orderByOwner()"
@@ -29,8 +26,8 @@ import { BookStatus } from '../../../helpers/book-status';
           <th
             class="orderable title"
             [ngClass]="{
-              orderAscend: orderedByTitleAsc(),
-              orderDescend: orderedByTitleAsc() === false
+              orderAscend: orderedByTitleAsc,
+              orderDescend: orderedByTitleAsc === false
             }"
             (click)="orderByTitle()"
             (keyup.enter)="orderByTitle()"
@@ -128,14 +125,8 @@ import { BookStatus } from '../../../helpers/book-status';
   styleUrl: `../../shared/table-styles.css`,
 })
 export class BookshelfTable {
-  orderedByOwnerAsc = signal<true | false | undefined>(undefined);
-  orderedByTitleAsc = signal<true | false | undefined>(undefined);
+  bookOrder = model<BookOrderValues>({});
   books = input<ShelvedBookInfo[]>([]);
-  orderedBooks = computed<ShelvedBookInfo[]>(() => {
-    if (this.orderedByOwnerAsc() !== undefined) return this.getOrderByOwner();
-    if (this.orderedByTitleAsc() !== undefined) return this.getOrderByTitle();
-    return this.books();
-  });
   delete = output<string>();
   edit = output<string>();
   lend = output<string>();
@@ -157,38 +148,24 @@ export class BookshelfTable {
     return BookStatus.LibraryBorrowed;
   }
 
-  getOwnerNameFromBook(book: ShelvedBookWithData): string {
-    return getOwnerNameFromBook(book);
+  get orderedByOwnerAsc(): boolean | undefined {
+    return this.bookOrder().owner_sort;
   }
 
-  getStatusFromBook(book: ShelvedBookWithData): string {
-    return getStatusFromBook(book);
+  get orderedByTitleAsc(): boolean | undefined {
+    return this.bookOrder().title_sort;
   }
 
   orderByOwner() {
-    this.orderedByTitleAsc.set(undefined);
-    this.orderedByOwnerAsc.set(!this.orderedByOwnerAsc());
-  }
-
-  private getOrderByOwner(): ShelvedBookWithData[] {
-    return this.books().toSorted((a, b) =>
-      this.orderedByOwnerAsc()
-        ? getOwnerNameFromBook(a).localeCompare(getOwnerNameFromBook(b))
-        : getOwnerNameFromBook(b).localeCompare(getOwnerNameFromBook(a))
-    );
+    this.bookOrder.update((currentOrder) => ({
+      owner_sort: !currentOrder.owner_sort,
+    }));
   }
 
   orderByTitle() {
-    this.orderedByOwnerAsc.set(undefined);
-    this.orderedByTitleAsc.set(!this.orderedByTitleAsc());
-  }
-
-  private getOrderByTitle(): ShelvedBookWithData[] {
-    return this.books().toSorted((a, b) =>
-      this.orderedByTitleAsc()
-        ? a.title.localeCompare(b.title)
-        : b.title.localeCompare(a.title)
-    );
+    this.bookOrder.update((currentOrder) => ({
+      title_sort: !currentOrder.title_sort,
+    }));
   }
 
   editBook(id: string) {

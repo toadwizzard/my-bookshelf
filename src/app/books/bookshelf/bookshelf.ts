@@ -1,14 +1,14 @@
-import { Component, inject, viewChild } from '@angular/core';
+import { Component, effect, inject, signal, viewChild } from '@angular/core';
 import { BookService } from '../../services/book-service';
-import {
-  BookshelfFilter,
-  BookshelfFilterValues,
-} from './bookshelf-filter/bookshelf-filter';
+import { BookshelfFilter } from './bookshelf-filter/bookshelf-filter';
 import { BookshelfTable } from './bookshelf-table/bookshelf-table';
-import { getOwnerNameFromBook, stringMatches } from '../../helpers/utils';
 import { Dialog } from '@angular/cdk/dialog';
 import { BookshelfFormDialog } from './bookshelf-form-dialog/bookshelf-form-dialog';
 import { ShelvedBookInfo } from '../../models/shelved-book-info';
+import { BookStatus } from '../../helpers/book-status';
+import { BookFilterValues } from '../../models/book-filter-values';
+import { BookOrderValues } from '../../models/book-order-values';
+import { ShelfPagination } from '../../models/shelf-pagination';
 
 @Component({
   selector: 'app-bookshelf',
@@ -38,6 +38,7 @@ import { ShelvedBookInfo } from '../../models/shelved-book-info';
         (return)="returnBook($event)"
         (lend)="openEditBookDialog($event, true)"
         (delete)="deleteBook($event)"
+        [(bookOrder)]="orderValues"
       />
       }
     </div>
@@ -50,20 +51,41 @@ export class Bookshelf {
   bookFormDialog = inject(Dialog);
 
   books: ShelvedBookInfo[] = [];
+  filterValues = signal<BookFilterValues>({
+    owner: '',
+    title: '',
+    author: '',
+    onShelf: false,
+    lent: false,
+    borrowed: false,
+    libraryBook: false,
+  });
+  orderValues = signal<BookOrderValues>({});
+  pagination = signal<ShelfPagination>({});
+  lastPage = signal<number>(0);
   loading = false;
   isError = false;
   errorMsg = '';
 
   constructor() {
     this.getShelvedBooks();
+    effect(() => {
+      this.getShelvedBooks();
+    });
   }
 
   getShelvedBooks() {
     this.isError = false;
     this.loading = true;
-    this.bookService.getShelvedBooks().subscribe({
+    const shelfTransform = {
+      ...this.filterValues(),
+      ...this.orderValues(),
+      ...this.pagination(),
+    };
+    this.bookService.getShelvedBooks(shelfTransform).subscribe({
       next: (shelf) => {
         this.books = shelf.books;
+        this.lastPage.set(shelf.last_page);
       },
       complete: () => {
         this.loading = false;
@@ -71,24 +93,12 @@ export class Bookshelf {
     });
   }
 
-  filterBooks(filterValues: BookshelfFilterValues) {
-    this.filteredBooks = this.books.filter(
-      (book) =>
-        (!filterValues.hasCheck ||
-          (filterValues.onShelf && book.status === BookStatus.Default) ||
-          (filterValues.lent && book.status === BookStatus.Lent) ||
-          (filterValues.borrowed && book.status === BookStatus.Borrowed) ||
-          (filterValues.libraryBook &&
-            book.status === BookStatus.LibraryBorrowed)) &&
-        (!filterValues.owner ||
-          stringMatches(getOwnerNameFromBook(book), filterValues.owner)) &&
-        (!filterValues.title ||
-          stringMatches(book.title, filterValues.title)) &&
-        (!filterValues.author ||
-          book.author_name.some((author) =>
-            stringMatches(author, filterValues.author)
-          ))
-    );
+  filterBooks(filterValues: BookFilterValues) {
+    this.filterValues.set(filterValues);
+  }
+
+  setPage(pagination: ShelfPagination) {
+    this.pagination.set(pagination);
   }
 
   openAddBookDialog() {
@@ -128,10 +138,10 @@ export class Bookshelf {
         if (originalBook.status === BookStatus.Lent) {
           this.bookService
             .updateShelvedBook(id, {
-      ...originalBook,
-      status: BookStatus.Default,
+              ...originalBook,
+              status: BookStatus.Default,
               other_name: undefined,
-      date: undefined,
+              date: undefined,
             })
             .subscribe({
               next: (result) => {

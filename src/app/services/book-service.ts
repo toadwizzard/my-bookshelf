@@ -4,12 +4,16 @@ import { AuthService } from './auth-service';
 import { UserService } from './user-service';
 import { BookResultInfo } from '../models/book-result-info';
 import { catchError, map, Observable } from 'rxjs';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpParams } from '@angular/common/http';
 import { ShelvedBookInfo } from '../models/shelved-book-info';
 import { ShelvedBookData } from '../models/shelved-book-data';
 import { environment } from '../../environments/environment';
 import { FormError } from '../helpers/form-error';
 import { formatDate } from '@angular/common';
+import { BookFilterValues } from '../models/book-filter-values';
+import { BookOrderValues } from '../models/book-order-values';
+import { ShelfPagination } from '../models/shelf-pagination';
+import { BookStatus } from '../helpers/book-status';
 
 export interface ShelvedBookInfoWithId extends ShelvedBookInfo {
   ownerId: number;
@@ -116,21 +120,56 @@ const shelvedBooks: ShelvedBookInfoWithId[] = [
   providedIn: 'root',
 })
 export class BookService {
-  private OL_BASE_URL = 'https://openlibrary.org';
-
   authService = inject(AuthService);
   http = inject(HttpClient);
 
-  getShelvedBooks(): Observable<{
+  getShelvedBooks(
+    shelfTransform:
+      | (BookFilterValues & BookOrderValues & ShelfPagination)
+      | undefined = undefined
+  ): Observable<{
     books: ShelvedBookInfo[];
     page: number;
     last_page: number;
   }> {
+    let params = new HttpParams();
+    if (shelfTransform) {
+      if (shelfTransform.owner)
+        params = params.set('owner', shelfTransform.owner);
+      if (shelfTransform.title)
+        params = params.set('title', shelfTransform.title);
+      if (shelfTransform.author)
+        params = params.set('author', shelfTransform.author);
+      const statusList: string[] = [];
+      if (shelfTransform.onShelf) statusList.push(BookStatus.Default);
+      if (shelfTransform.lent) statusList.push(BookStatus.Lent);
+      if (shelfTransform.borrowed) statusList.push(BookStatus.Borrowed);
+      if (shelfTransform.libraryBook)
+        statusList.push(BookStatus.LibraryBorrowed);
+      if (statusList.length > 0) {
+        params = params.set('status', statusList.join(','));
+      }
+      if (shelfTransform.owner_sort !== undefined)
+        params = params.set(
+          'owner_sort',
+          shelfTransform.owner_sort ? 'asc' : 'desc'
+        );
+      if (shelfTransform.title_sort !== undefined)
+        params = params.set(
+          'title_sort',
+          shelfTransform.title_sort ? 'asc' : 'desc'
+        );
+      if (shelfTransform.page) params = params.set('page', shelfTransform.page);
+      if (shelfTransform.limit)
+        params = params.set('limit', shelfTransform.limit);
+    }
     return this.http.get<{
       books: ShelvedBookInfo[];
       page: number;
       last_page: number;
-    }>(`${environment.apiUrl}`);
+    }>(`${environment.apiUrl}`, {
+      params,
+    });
   }
 
   getWishlistedBooks(): ShelvedBookWithData[] {
