@@ -66,6 +66,12 @@ button.base-button.green:hover {
   border-color: var(--app-green-hover);
 }
 
+button.base-button.selected {
+  background-color: var(--accent-hover);
+  border-color: var(--accent-hover);
+  cursor: default;
+}
+
 .dialog {
   display: block;
   background-color: var(--background-color);

@@ -9,14 +9,20 @@ import { BookStatus } from '../../helpers/book-status';
 import { BookFilterValues } from '../../models/book-filter-values';
 import { BookOrderValues } from '../../models/book-order-values';
 import { ShelfPagination } from '../../models/shelf-pagination';
+import { Pagination } from '../pagination/pagination';
 
 @Component({
   selector: 'app-bookshelf',
-  imports: [BookshelfFilter, BookshelfTable],
+  imports: [BookshelfFilter, BookshelfTable, Pagination],
   template: `
     <div class="bookshelf-container">
+      <app-bookshelf-filter (filter)="filterBooks($event)" />
       <div class="bookshelf-top">
-        <app-bookshelf-filter (filter)="filterBooks($event)" />
+        <app-pagination
+          [lastPage]="lastPage()"
+          (setPage)="setPage($event)"
+          (setLimit)="setLimit($event)"
+        />
         <button
           (click)="openAddBookDialog()"
           class="base-button icon-button"
@@ -25,22 +31,20 @@ import { ShelfPagination } from '../../models/shelf-pagination';
           <span class="material-icons">add</span>
         </button>
       </div>
-      @if(loading) {
-      <p class="loading">Loading...</p>
-      } @else { @if(isError) {
+      @if(isError) {
       <p class="error-msg">
         <span class="material-icons">error</span> {{ errorMsg }}
       </p>
       }
       <app-bookshelf-table
         [books]="books"
+        [loading]="loading()"
         (edit)="openEditBookDialog($event, false)"
         (return)="returnBook($event)"
         (lend)="openEditBookDialog($event, true)"
         (delete)="deleteBook($event)"
         [(bookOrder)]="orderValues"
       />
-      }
     </div>
   `,
   styleUrl: '../shared/shelf-styles.css',
@@ -63,7 +67,7 @@ export class Bookshelf {
   orderValues = signal<BookOrderValues>({});
   pagination = signal<ShelfPagination>({});
   lastPage = signal<number>(0);
-  loading = false;
+  loading = signal<boolean>(false);
   isError = false;
   errorMsg = '';
 
@@ -76,7 +80,7 @@ export class Bookshelf {
 
   getShelvedBooks() {
     this.isError = false;
-    this.loading = true;
+    this.loading.set(true);
     const shelfTransform = {
       ...this.filterValues(),
       ...this.orderValues(),
@@ -88,7 +92,7 @@ export class Bookshelf {
         this.lastPage.set(shelf.last_page);
       },
       complete: () => {
-        this.loading = false;
+        this.loading.set(false);
       },
     });
   }
@@ -97,8 +101,24 @@ export class Bookshelf {
     this.filterValues.set(filterValues);
   }
 
-  setPage(pagination: ShelfPagination) {
-    this.pagination.set(pagination);
+  setPage(pageNum: number) {
+    const { page, ...withoutPage } = this.pagination();
+    if (pageNum > 1)
+      this.pagination.set({
+        ...withoutPage,
+        page: pageNum,
+      });
+    else this.pagination.set(withoutPage);
+  }
+
+  setLimit(pageLimit: number) {
+    const { limit, ...withoutLimit } = this.pagination();
+    if (pageLimit > 1)
+      this.pagination.set({
+        ...withoutLimit,
+        limit: pageLimit,
+      });
+    else this.pagination.set(withoutLimit);
   }
 
   openAddBookDialog() {
@@ -132,7 +152,7 @@ export class Bookshelf {
   }
 
   returnBook(id: string) {
-    this.loading = true;
+    this.loading.set(true);
     this.bookService.getShelvedBookById(id).subscribe({
       next: (originalBook) => {
         if (originalBook.status === BookStatus.Lent) {
@@ -150,7 +170,7 @@ export class Bookshelf {
                 }
               },
               error: (err) => {
-                this.loading = false;
+                this.loading.set(false);
                 this.isError = true;
                 this.errorMsg = `Could not return book: ${err.message}`;
               },
@@ -158,7 +178,7 @@ export class Bookshelf {
         }
       },
       error: (err) => {
-        this.loading = false;
+        this.loading.set(false);
         this.isError = true;
         this.errorMsg = `Could not return book: ${err.message}`;
       },
@@ -166,7 +186,7 @@ export class Bookshelf {
   }
 
   deleteBook(id: string) {
-    this.loading = true;
+    this.loading.set(true);
     this.bookService.deleteShelvedBook(id).subscribe({
       next: (value) => {
         if (value) {
@@ -174,7 +194,7 @@ export class Bookshelf {
         }
       },
       error: (err) => {
-        this.loading = false;
+        this.loading.set(false);
         this.isError = true;
         this.errorMsg = `Could not remove book from list: ${err.message}`;
       },

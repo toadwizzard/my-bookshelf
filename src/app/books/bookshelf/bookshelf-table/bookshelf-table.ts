@@ -41,7 +41,7 @@ import { BookOrderValues } from '../../../models/book-order-values';
         </tr>
       </thead>
       <tbody>
-        @if(books().length === 0){
+        @if (!loading()) { @if(books().length === 0){
         <tr>
           <td class="empty-warning" colspan="5">
             No books to show. (Try adding a book first!)
@@ -101,9 +101,12 @@ import { BookOrderValues } from '../../../models/book-order-values';
             </div>
           </td>
         </tr>
-        }
+        } }
       </tbody>
     </table>
+    @if(loading()){
+    <p class="loading">Loading...</p>
+    }
   `,
   styles: `
     .owner {
@@ -127,6 +130,7 @@ import { BookOrderValues } from '../../../models/book-order-values';
 export class BookshelfTable {
   bookOrder = model<BookOrderValues>({});
   books = input<ShelvedBookInfo[]>([]);
+  loading = input<boolean>(false);
   delete = output<string>();
   edit = output<string>();
   lend = output<string>();

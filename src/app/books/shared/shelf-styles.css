@@ -6,9 +6,9 @@
 .bookshelf-top {
   display: flex;
   justify-content: space-between;
+  margin-bottom: 1rem;
 }
 
 .bookshelf-top button {
   align-self: flex-end;
-  margin-bottom: 1rem;
 }
