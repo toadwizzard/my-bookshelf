@@ -9,6 +9,3 @@ A personal bookshelf to showcase all owned books, with various options to search
 A separate wishlist bookshelf, with similar search and filter functioning, and the option to remove a book from the list and add it to the owned books.
 
 Books on the personal shelf can be lent out to other people by (optionally) adding the borrower's name and date of lending, helping keep track of books the user owns but are currently in someone else's possession. Books can also be marked as borrowed from someone else or a library.
-
-## Development notes
-The website is currently under development, and currently has no supporting backend for data persistence. Example data is available for demonstrative purposes with username "user" and password "password" (or data can be temporarily added via registering).
