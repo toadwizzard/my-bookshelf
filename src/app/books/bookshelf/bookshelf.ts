@@ -20,8 +20,8 @@ import { Pagination } from '../pagination/pagination';
       <div class="bookshelf-top">
         <app-pagination
           [lastPage]="lastPage()"
-          (setPage)="setPage($event)"
-          (setLimit)="setLimit($event)"
+          (setPage)="this.currentPage.set($event)"
+          [(limit)]="pageLimit"
         />
         <button
           (click)="openAddBookDialog()"
@@ -65,7 +65,8 @@ export class Bookshelf {
     libraryBook: false,
   });
   orderValues = signal<BookOrderValues>({});
-  pagination = signal<ShelfPagination>({});
+  currentPage = signal<number>(1);
+  pageLimit = signal<number>(20);
   lastPage = signal<number>(0);
   loading = signal<boolean>(false);
   isError = false;
@@ -81,11 +82,15 @@ export class Bookshelf {
   getShelvedBooks() {
     this.isError = false;
     this.loading.set(true);
-    const shelfTransform = {
-      ...this.filterValues(),
-      ...this.orderValues(),
-      ...this.pagination(),
-    };
+    const shelfTransform: BookFilterValues & BookOrderValues & ShelfPagination =
+      {
+        ...this.filterValues(),
+        ...this.orderValues(),
+        limit: this.pageLimit(),
+      };
+    if (this.currentPage() !== 1) {
+      shelfTransform.page = this.currentPage();
+    }
     this.bookService.getShelvedBooks(shelfTransform).subscribe({
       next: (shelf) => {
         this.books = shelf.books;
@@ -99,26 +104,6 @@ export class Bookshelf {
 
   filterBooks(filterValues: BookFilterValues) {
     this.filterValues.set(filterValues);
-  }
-
-  setPage(pageNum: number) {
-    const { page, ...withoutPage } = this.pagination();
-    if (pageNum > 1)
-      this.pagination.set({
-        ...withoutPage,
-        page: pageNum,
-      });
-    else this.pagination.set(withoutPage);
-  }
-
-  setLimit(pageLimit: number) {
-    const { limit, ...withoutLimit } = this.pagination();
-    if (pageLimit > 1)
-      this.pagination.set({
-        ...withoutLimit,
-        limit: pageLimit,
-      });
-    else this.pagination.set(withoutLimit);
   }
 
   openAddBookDialog() {
@@ -153,16 +138,20 @@ export class Bookshelf {
 
   returnBook(id: string) {
     this.loading.set(true);
-    this.bookService.getShelvedBookById(id).subscribe({
+    this.bookService.getBookById(id, false).subscribe({
       next: (originalBook) => {
         if (originalBook.status === BookStatus.Lent) {
           this.bookService
-            .updateShelvedBook(id, {
-              ...originalBook,
-              status: BookStatus.Default,
-              other_name: undefined,
-              date: undefined,
-            })
+            .updateBook(
+              id,
+              {
+                ...originalBook,
+                status: BookStatus.Default,
+                other_name: undefined,
+                date: undefined,
+              },
+              false
+            )
             .subscribe({
               next: (result) => {
                 if (result) {
@@ -187,7 +176,7 @@ export class Bookshelf {
 
   deleteBook(id: string) {
     this.loading.set(true);
-    this.bookService.deleteShelvedBook(id).subscribe({
+    this.bookService.deleteBook(id).subscribe({
       next: (value) => {
         if (value) {
           this.getShelvedBooks();

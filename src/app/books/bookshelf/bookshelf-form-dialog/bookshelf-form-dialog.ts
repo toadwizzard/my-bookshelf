@@ -166,7 +166,7 @@ export class BookshelfFormDialog {
     this.isLend = !!this.data?.isLend;
     if (this.data) {
       this.getLoading = true;
-      this.bookService.getShelvedBookById(this.data.shelvedBookId).subscribe({
+      this.bookService.getBookById(this.data.shelvedBookId, false).subscribe({
         next: (shelvedBook) => {
           this.bookForm.patchValue({
             bookData: {
@@ -226,11 +226,12 @@ export class BookshelfFormDialog {
       this.postLoading = true;
       let serviceMethod;
       if (this.isEditing)
-        serviceMethod = this.bookService.updateShelvedBook(
+        serviceMethod = this.bookService.updateBook(
           this.data?.shelvedBookId ?? '',
-          book
+          book,
+          false
         );
-      else serviceMethod = this.bookService.addShelvedBook(book);
+      else serviceMethod = this.bookService.addBook(book, false);
       serviceMethod.subscribe({
         next: (value) => {
           if (value) {

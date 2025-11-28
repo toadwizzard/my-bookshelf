@@ -121,16 +121,4 @@ export class UserService {
       })
     );
   }
-
-  //stand-in for proper 401 http response
-  handleAuthentication(): number | undefined {
-    const userId = this.authService.getId();
-    const idValid =
-      userId !== undefined && users.some((user) => user.id === userId);
-    if (!idValid) {
-      this.authService.deleteId();
-      this.router.navigate(['/login']);
-    }
-    return userId;
-  }
 }

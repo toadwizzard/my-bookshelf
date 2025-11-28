@@ -1,5 +1,12 @@
 import { NgClass } from '@angular/common';
-import { Component, computed, input, output, signal } from '@angular/core';
+import {
+  Component,
+  computed,
+  input,
+  model,
+  output,
+  signal,
+} from '@angular/core';
 
 @Component({
   selector: 'app-pagination',
@@ -68,7 +75,7 @@ import { Component, computed, input, output, signal } from '@angular/core';
 export class Pagination {
   current = signal<number>(1);
   setPage = output<number>();
-  setLimit = output<number>();
+  limit = model<number>();
   lastPage = input.required<number>();
   beforeAndAfterCount = input<number>(2);
   visiblePages = computed<{ num: number; selected: boolean }[]>(() => {
@@ -116,7 +123,7 @@ export class Pagination {
   setPageLimit(event: Event) {
     const target = event.target as HTMLSelectElement | null;
     if (target) {
-      this.setLimit.emit(parseInt(target.value));
+      this.limit.update((cur) => parseInt(target.value));
     }
   }
 }
