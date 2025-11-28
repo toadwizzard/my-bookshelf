@@ -1,20 +1,14 @@
-import { AbstractControl, ValidationErrors, ValidatorFn } from "@angular/forms";
-import { UserService } from "../../services/user-service";
-
-export function uniqueUsernameValidator(userService: UserService): ValidatorFn {
-  return (control: AbstractControl): ValidationErrors | null => {
-    const unique = userService.checkUsernameUnique(control.value);
-    return unique ? null : {existingUsername: true};
-  }
-}
+import { AbstractControl, ValidationErrors, ValidatorFn } from '@angular/forms';
 
 export function matchingPasswordsValidator(): ValidatorFn {
   return (control: AbstractControl): ValidationErrors | null => {
     const password = control.get('password');
     const passwordConfirm = control.get('passwordConfirm');
-    const error = password && passwordConfirm && password.value !== passwordConfirm.value ?
-      {passwordsNotMatch: true} : null;
+    const error =
+      password && passwordConfirm && password.value !== passwordConfirm.value
+        ? { fieldError: 'Passwords do not match.' }
+        : null;
     control.get('passwordConfirm')?.setErrors(error);
     return error;
-  }
+  };
 }

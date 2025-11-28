@@ -1,5 +1,12 @@
 import { NgClass } from '@angular/common';
-import { Component, input, output } from '@angular/core';
+import {
+  Component,
+  ElementRef,
+  inject,
+  input,
+  output,
+  signal,
+} from '@angular/core';
 
 @Component({
   selector: 'app-search-result',
@@ -22,6 +29,13 @@ export class SearchResult {
   key = input.required<string>();
   isEven = input.required<boolean>();
   select = output<string>();
+  height = signal<number>(0);
+
+  private element = inject<ElementRef<HTMLElement>>(ElementRef);
+
+  ngAfterViewChecked() {
+    this.height.set(this.element.nativeElement.offsetHeight);
+  }
 
   onSelect() {
     this.select.emit(this.key());

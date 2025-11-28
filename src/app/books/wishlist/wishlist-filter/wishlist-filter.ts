@@ -1,6 +1,7 @@
 import { NgClass } from '@angular/common';
 import { Component, output } from '@angular/core';
 import { FormControl, FormGroup, ReactiveFormsModule } from '@angular/forms';
+import { BookFilterValues } from '../../../models/book-filter-values';
 
 @Component({
   selector: 'app-wishlist-filter',
@@ -54,7 +55,7 @@ export class WishlistFilter {
     title: new FormControl<string>(''),
     author: new FormControl<string>(''),
   });
-  filter = output<{ title: string; author: string }>();
+  filter = output<BookFilterValues>();
 
   toggleForm() {
     this.formHidden = !this.formHidden;
@@ -69,10 +70,15 @@ export class WishlistFilter {
     this.filter.emit(this.getFilterValues());
   }
 
-  private getFilterValues(): { title: string; author: string } {
+  private getFilterValues(): BookFilterValues {
     return {
       title: this.filterForm.value.title ?? '',
       author: this.filterForm.value.author ?? '',
+      owner: '',
+      onShelf: false,
+      lent: false,
+      borrowed: false,
+      libraryBook: false,
     };
   }
 }

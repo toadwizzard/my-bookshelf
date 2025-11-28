@@ -1,0 +1,19 @@
+.button-container {
+  display: flex;
+  column-gap: 0.5rem;
+}
+
+button.page-button {
+  font-weight: bold;
+  padding: 0.2rem 0.7rem;
+}
+
+button.step-button {
+  padding: 0.2rem 0.3rem;
+}
+
+p.result-count {
+  margin: 0;
+  margin-bottom: 0.5rem;
+  color: var(--accent-color);
+}

@@ -28,15 +28,16 @@ export const routes: Routes = [
   {
     path: 'login',
     component: Login,
-    title: 'Log in'
+    title: 'Log in',
+    canActivate: [authGuard],
   },
   {
     path: 'register',
     component: Register,
-    title: 'Register'
+    title: 'Register',
   },
   {
     path: '**',
     redirectTo: '/login',
-  }
+  },
 ];

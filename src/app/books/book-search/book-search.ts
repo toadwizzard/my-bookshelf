@@ -1,5 +1,5 @@
 import { NgClass } from '@angular/common';
-import { Component, inject } from '@angular/core';
+import { Component, computed, inject, input, viewChild } from '@angular/core';
 import { SearchResult } from './search-result/search-result';
 import { BookResultInfo } from '../../models/book-result-info';
 import {
@@ -10,7 +10,6 @@ import {
   Validators,
 } from '@angular/forms';
 import { BookService } from '../../services/book-service';
-import { BookInfo } from '../../models/book-info';
 
 @Component({
   selector: 'app-book-search',
@@ -42,6 +41,12 @@ import { BookInfo } from '../../models/book-info';
             Search
           </button>
         </div>
+        @if(search.hasError("searchError") && search.touched && search.dirty){
+        <p class="error-msg">
+          <span class="material-icons">error</span>
+          {{ search.getError('searchError') }}
+        </p>
+        }
       </form>
       <div
         class="results"
@@ -71,7 +76,13 @@ import { BookInfo } from '../../models/book-info';
         />
         } } }
       </div>
-      <div class="results-clearfix"></div>
+      <div class="results-clearfix" [style.height.px]="clearFixHeight()"></div>
+      @if(touched && error()) {
+      <p class="error-msg">
+        <span class="material-icons">error</span>
+        {{ error() }}
+      </p>
+      }
     </div>
   `,
   styleUrls: ['../../shared/form-styles.css', 'book-search.css'],
@@ -79,16 +90,22 @@ import { BookInfo } from '../../models/book-info';
 export class BookSearch implements ControlValueAccessor {
   resultsOpen: boolean = false;
   results: BookResultInfo[] = [];
-  selectedBook: BookInfo | undefined = undefined;
+  selectedBook: BookResultInfo | undefined = undefined;
 
   search = new FormControl<string>('', [Validators.required]);
   isSearchLoading: boolean = false;
   bookService = inject(BookService);
+  firstResult = viewChild(SearchResult);
+  clearFixHeight = computed<number>(() => {
+    const result = this.firstResult();
+    return result ? result.height() : 0;
+  });
 
   touched: boolean = false;
   disabled: boolean = false;
-  onChange = (selectedBook: BookInfo | undefined) => {};
+  onChange = (selectedBook: BookResultInfo | undefined) => {};
   onTouched = () => {};
+  error = input<any>();
 
   openSearch(event: any) {
     event.preventDefault();
@@ -107,13 +124,8 @@ export class BookSearch implements ControlValueAccessor {
         this.resultsOpen = true;
       },
       error: (err) => {
-        this.results = [
-          {
-            title: 'An error occurred:',
-            author_name: [err],
-            key: '',
-          },
-        ];
+        this.search.setErrors({ searchError: err.message });
+        this.isSearchLoading = false;
       },
       complete: () => {
         this.isSearchLoading = false;
@@ -129,18 +141,11 @@ export class BookSearch implements ControlValueAccessor {
     const selectedResult = this.results.find(
       (result) => result.key === elementKey
     );
-    const selectedBook: BookInfo | undefined = selectedResult
-      ? {
-          bookKey: selectedResult.key ?? '',
-          title: selectedResult.title ?? '',
-          author_name: selectedResult.author_name ?? [],
-        }
-      : undefined;
-    this.writeValue(selectedBook);
-    this.onChange(selectedBook);
+    this.writeValue(selectedResult);
+    this.onChange(selectedResult);
   }
 
-  writeValue(selectedBook: BookInfo | undefined): void {
+  writeValue(selectedBook: BookResultInfo | undefined): void {
     this.selectedBook = selectedBook;
     this.results = this.selectedBook ? [this.selectedBook] : [];
   }

@@ -3,21 +3,29 @@ import { UserService } from '../../services/user-service';
 import { UserInfo } from '../../models/user-info';
 import { Dialog } from '@angular/cdk/dialog';
 import { ProfileForm } from '../profile-form/profile-form';
+import { ProfileDelete } from '../profile-delete/profile-delete';
 
 @Component({
   selector: 'app-profile',
   imports: [],
   template: `
     <div class="profile-container">
+      @if(loading){
+      <p class="loading">Loading...</p>
+      } @else {
       <div>
         <p>Username:</p>
-        <p>{{user?.username}}</p>
+        <p>{{ user?.username }}</p>
       </div>
       <div>
         <p>Email:</p>
-        <p>{{user?.email}}</p>
+        <p>{{ user?.email }}</p>
       </div>
       <button class="base-button" (click)="openFormDialog()">Edit</button>
+      <button class="base-button red" (click)="openDeleteDialog()">
+        Delete profile
+      </button>
+      }
     </div>
   `,
   styleUrl: `profile.css`,
@@ -25,25 +33,39 @@ import { ProfileForm } from '../profile-form/profile-form';
 export class Profile {
   userService = inject(UserService);
   user: UserInfo | undefined;
+  loading = false;
 
-  formDialog = inject(Dialog);
+  dialog = inject(Dialog);
 
   constructor() {
-    this.user = this.userService.getUser();
+    this.loading = true;
+    this.userService.getUser().subscribe({
+      next: (user) => {
+        this.user = user;
+      },
+      complete: () => {
+        this.loading = false;
+      },
+    });
   }
 
   openFormDialog() {
-    if(!this.user)
-      return;
-    const dialogRef = this.formDialog.open<UserInfo>(ProfileForm, {
+    if (!this.user) return;
+    const dialogRef = this.dialog.open<UserInfo>(ProfileForm, {
       width: '400px',
-      data: {user: this.user}
+      data: { user: this.user },
     });
 
-    dialogRef.closed.subscribe(result => {
-      if(result){
-        this.user = this.userService.updateUser(result);
+    dialogRef.closed.subscribe((result) => {
+      if (result) {
+        this.user = result;
       }
+    });
+  }
+
+  openDeleteDialog() {
+    const dialogRef = this.dialog.open(ProfileDelete, {
+      width: '400px',
     });
   }
 }

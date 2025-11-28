@@ -1,11 +1,8 @@
 import { NgClass } from '@angular/common';
-import { Component, computed, input, output, signal } from '@angular/core';
-import {
-  getOwnerNameFromBook,
-  getStatusFromBook,
-} from '../../../helpers/utils';
-import { BookStatus } from '../../../models/shelved-book-info';
-import { ShelvedBookWithData } from '../../../models/shelved-book-with-data';
+import { Component, input, model, output } from '@angular/core';
+import { ShelvedBookInfo } from '../../../models/shelved-book-info';
+import { BookStatus } from '../../../helpers/book-status';
+import { BookOrderValues } from '../../../models/book-order-values';
 
 @Component({
   selector: 'app-bookshelf-table',
@@ -17,8 +14,8 @@ import { ShelvedBookWithData } from '../../../models/shelved-book-with-data';
           <th
             class="orderable owner"
             [ngClass]="{
-              orderAscend: orderedByOwnerAsc(),
-              orderDescend: orderedByOwnerAsc() === false
+              orderAscend: orderedByOwnerAsc,
+              orderDescend: orderedByOwnerAsc === false
             }"
             (click)="orderByOwner()"
             (keyup.enter)="orderByOwner()"
@@ -29,8 +26,8 @@ import { ShelvedBookWithData } from '../../../models/shelved-book-with-data';
           <th
             class="orderable title"
             [ngClass]="{
-              orderAscend: orderedByTitleAsc(),
-              orderDescend: orderedByTitleAsc() === false
+              orderAscend: orderedByTitleAsc,
+              orderDescend: orderedByTitleAsc === false
             }"
             (click)="orderByTitle()"
             (keyup.enter)="orderByTitle()"
@@ -44,18 +41,18 @@ import { ShelvedBookWithData } from '../../../models/shelved-book-with-data';
         </tr>
       </thead>
       <tbody>
-        @if(orderedBooks().length === 0){
+        @if (!loading()) { @if(books().length === 0){
         <tr>
           <td class="empty-warning" colspan="5">
             No books to show. (Try adding a book first!)
           </td>
         </tr>
-        } @for (book of orderedBooks(); track $index) {
+        } @for (book of books(); track $index) {
         <tr>
-          <td>{{ getOwnerNameFromBook(book) }}</td>
+          <td>{{ book.owner_name }}</td>
           <td>{{ book.title }}</td>
-          <td>{{ book.author_name.join(', ') }}</td>
-          <td>{{ getStatusFromBook(book) }}</td>
+          <td>{{ book.author.join(', ') }}</td>
+          <td>{{ book.full_status }}</td>
           <td>
             <div class="action-button-container">
               @if (book.status === defaultStatus){
@@ -104,9 +101,12 @@ import { ShelvedBookWithData } from '../../../models/shelved-book-with-data';
             </div>
           </td>
         </tr>
-        }
+        } }
       </tbody>
     </table>
+    @if(loading()){
+    <p class="loading">Loading...</p>
+    }
   `,
   styles: `
     .owner {
@@ -128,18 +128,13 @@ import { ShelvedBookWithData } from '../../../models/shelved-book-with-data';
   styleUrl: `../../shared/table-styles.css`,
 })
 export class BookshelfTable {
-  orderedByOwnerAsc = signal<true | false | undefined>(undefined);
-  orderedByTitleAsc = signal<true | false | undefined>(undefined);
-  books = input<ShelvedBookWithData[]>([]);
-  orderedBooks = computed<ShelvedBookWithData[]>(() => {
-    if (this.orderedByOwnerAsc() !== undefined) return this.getOrderByOwner();
-    if (this.orderedByTitleAsc() !== undefined) return this.getOrderByTitle();
-    return this.books();
-  });
-  delete = output<number>();
-  edit = output<number>();
-  lend = output<number>();
-  return = output<number>();
+  bookOrder = model<BookOrderValues>({});
+  books = input<ShelvedBookInfo[]>([]);
+  loading = input<boolean>(false);
+  delete = output<string>();
+  edit = output<string>();
+  lend = output<string>();
+  return = output<string>();
 
   get defaultStatus() {
     return BookStatus.Default;
@@ -157,53 +152,39 @@ export class BookshelfTable {
     return BookStatus.LibraryBorrowed;
   }
 
-  getOwnerNameFromBook(book: ShelvedBookWithData): string {
-    return getOwnerNameFromBook(book);
+  get orderedByOwnerAsc(): boolean | undefined {
+    return this.bookOrder().owner_sort;
   }
 
-  getStatusFromBook(book: ShelvedBookWithData): string {
-    return getStatusFromBook(book);
+  get orderedByTitleAsc(): boolean | undefined {
+    return this.bookOrder().title_sort;
   }
 
   orderByOwner() {
-    this.orderedByTitleAsc.set(undefined);
-    this.orderedByOwnerAsc.set(!this.orderedByOwnerAsc());
-  }
-
-  private getOrderByOwner(): ShelvedBookWithData[] {
-    return this.books().toSorted((a, b) =>
-      this.orderedByOwnerAsc()
-        ? getOwnerNameFromBook(a).localeCompare(getOwnerNameFromBook(b))
-        : getOwnerNameFromBook(b).localeCompare(getOwnerNameFromBook(a))
-    );
+    this.bookOrder.update((currentOrder) => ({
+      owner_sort: !currentOrder.owner_sort,
+    }));
   }
 
   orderByTitle() {
-    this.orderedByOwnerAsc.set(undefined);
-    this.orderedByTitleAsc.set(!this.orderedByTitleAsc());
+    this.bookOrder.update((currentOrder) => ({
+      title_sort: !currentOrder.title_sort,
+    }));
   }
 
-  private getOrderByTitle(): ShelvedBookWithData[] {
-    return this.books().toSorted((a, b) =>
-      this.orderedByTitleAsc()
-        ? a.title.localeCompare(b.title)
-        : b.title.localeCompare(a.title)
-    );
-  }
-
-  editBook(id: number) {
+  editBook(id: string) {
     this.edit.emit(id);
   }
 
-  returnBook(id: number) {
+  returnBook(id: string) {
     this.return.emit(id);
   }
 
-  lendBook(id: number) {
+  lendBook(id: string) {
     this.lend.emit(id);
   }
 
-  deleteBook(id: number) {
+  deleteBook(id: string) {
     this.delete.emit(id);
   }
 }

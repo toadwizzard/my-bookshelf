@@ -1,23 +1,28 @@
-import { Component, inject, viewChild } from '@angular/core';
+import { Component, effect, inject, signal, viewChild } from '@angular/core';
 import { BookService } from '../../services/book-service';
-import {
-  BookshelfFilter,
-  BookshelfFilterValues,
-} from './bookshelf-filter/bookshelf-filter';
+import { BookshelfFilter } from './bookshelf-filter/bookshelf-filter';
 import { BookshelfTable } from './bookshelf-table/bookshelf-table';
-import { getOwnerNameFromBook, stringMatches } from '../../helpers/utils';
 import { Dialog } from '@angular/cdk/dialog';
 import { BookshelfFormDialog } from './bookshelf-form-dialog/bookshelf-form-dialog';
-import { BookStatus } from '../../models/shelved-book-info';
-import { ShelvedBookWithData } from '../../models/shelved-book-with-data';
+import { ShelvedBookInfo } from '../../models/shelved-book-info';
+import { BookStatus } from '../../helpers/book-status';
+import { BookFilterValues } from '../../models/book-filter-values';
+import { BookOrderValues } from '../../models/book-order-values';
+import { ShelfPagination } from '../../models/shelf-pagination';
+import { Pagination } from '../pagination/pagination';
 
 @Component({
   selector: 'app-bookshelf',
-  imports: [BookshelfFilter, BookshelfTable],
+  imports: [BookshelfFilter, BookshelfTable, Pagination],
   template: `
     <div class="bookshelf-container">
+      <app-bookshelf-filter (filter)="filterBooks($event)" />
       <div class="bookshelf-top">
-        <app-bookshelf-filter (filter)="filterBooks($event)" />
+        <app-pagination
+          [lastPage]="lastPage()"
+          (setPage)="this.currentPage.set($event)"
+          [(limit)]="pageLimit"
+        />
         <button
           (click)="openAddBookDialog()"
           class="base-button icon-button"
@@ -26,12 +31,19 @@ import { ShelvedBookWithData } from '../../models/shelved-book-with-data';
           <span class="material-icons">add</span>
         </button>
       </div>
+      @if(isError) {
+      <p class="error-msg">
+        <span class="material-icons">error</span> {{ errorMsg }}
+      </p>
+      }
       <app-bookshelf-table
-        [books]="filteredBooks"
+        [books]="books"
+        [loading]="loading()"
         (edit)="openEditBookDialog($event, false)"
         (return)="returnBook($event)"
         (lend)="openEditBookDialog($event, true)"
         (delete)="deleteBook($event)"
+        [(bookOrder)]="orderValues"
       />
     </div>
   `,
@@ -40,39 +52,62 @@ import { ShelvedBookWithData } from '../../models/shelved-book-with-data';
 export class Bookshelf {
   bookService = inject(BookService);
   bookFilter = viewChild(BookshelfFilter);
-
-  books: ShelvedBookWithData[] = [];
-  filteredBooks: ShelvedBookWithData[] = [];
-
   bookFormDialog = inject(Dialog);
 
+  books: ShelvedBookInfo[] = [];
+  filterValues = signal<BookFilterValues>({
+    owner: '',
+    title: '',
+    author: '',
+    onShelf: false,
+    lent: false,
+    borrowed: false,
+    libraryBook: false,
+  });
+  orderValues = signal<BookOrderValues>({});
+  currentPage = signal<number>(1);
+  pageLimit = signal<number>(20);
+  lastPage = signal<number>(0);
+  loading = signal<boolean>(false);
+  isError = false;
+  errorMsg = '';
+
   constructor() {
-    this.books = this.bookService.getShelvedBooks();
-    this.filteredBooks = this.books;
+    this.getShelvedBooks();
+    effect(() => {
+      this.getShelvedBooks();
+    });
   }
 
-  filterBooks(filterValues: BookshelfFilterValues) {
-    this.filteredBooks = this.books.filter(
-      (book) =>
-        (!filterValues.hasCheck ||
-          (filterValues.onShelf && book.status === BookStatus.Default) ||
-          (filterValues.lent && book.status === BookStatus.Lent) ||
-          (filterValues.borrowed && book.status === BookStatus.Borrowed) ||
-          (filterValues.libraryBook &&
-            book.status === BookStatus.LibraryBorrowed)) &&
-        (!filterValues.owner ||
-          stringMatches(getOwnerNameFromBook(book), filterValues.owner)) &&
-        (!filterValues.title ||
-          stringMatches(book.title, filterValues.title)) &&
-        (!filterValues.author ||
-          book.author_name.some((author) =>
-            stringMatches(author, filterValues.author)
-          ))
-    );
+  getShelvedBooks() {
+    this.isError = false;
+    this.loading.set(true);
+    const shelfTransform: BookFilterValues & BookOrderValues & ShelfPagination =
+      {
+        ...this.filterValues(),
+        ...this.orderValues(),
+        limit: this.pageLimit(),
+      };
+    if (this.currentPage() !== 1) {
+      shelfTransform.page = this.currentPage();
+    }
+    this.bookService.getShelvedBooks(shelfTransform).subscribe({
+      next: (shelf) => {
+        this.books = shelf.books;
+        this.lastPage.set(shelf.last_page);
+      },
+      complete: () => {
+        this.loading.set(false);
+      },
+    });
+  }
+
+  filterBooks(filterValues: BookFilterValues) {
+    this.filterValues.set(filterValues);
   }
 
   openAddBookDialog() {
-    const addBookDialogRef = this.bookFormDialog.open<ShelvedBookWithData>(
+    const addBookDialogRef = this.bookFormDialog.open<boolean>(
       BookshelfFormDialog,
       {
         width: '800px',
@@ -81,73 +116,77 @@ export class Bookshelf {
 
     addBookDialogRef.closed.subscribe((result) => {
       if (result) {
-        const addedBook = this.bookService.addShelvedBook(result);
-        if (addedBook) {
-          this.books.push(addedBook);
-          this.bookFilter()?.filterBooks();
-        }
+        this.getShelvedBooks();
       }
     });
   }
 
-  openEditBookDialog(id: number, isLend: boolean) {
-    const book = this.bookService.getShelvedBookById(id);
-    if (!book) return;
-    const editBookDialogRef = this.bookFormDialog.open<ShelvedBookWithData>(
+  openEditBookDialog(id: string, isLend: boolean) {
+    const editBookDialogRef = this.bookFormDialog.open<boolean>(
       BookshelfFormDialog,
       {
         width: '800px',
-        data: { shelvedBook: book, isLend },
+        data: { shelvedBookId: id, isLend },
       }
     );
-
     editBookDialogRef.closed.subscribe((result) => {
-      if (
-        result &&
-        (book.title !== result.title ||
-          book.status !== result.status ||
-          book.otherName !== result.otherName ||
-          book.date !== result.date)
-      ) {
-        result.id = book.id;
-        const editedBook = this.bookService.updateShelvedBook(result);
-        if (editedBook) {
-          const modifiedIndex = this.findBookIndex(editedBook);
-          if (modifiedIndex >= 0) {
-            this.books[modifiedIndex] = editedBook;
-            this.bookFilter()?.filterBooks();
-          }
+      if (result) {
+        this.getShelvedBooks();
+      }
+    });
+  }
+
+  returnBook(id: string) {
+    this.loading.set(true);
+    this.bookService.getBookById(id, false).subscribe({
+      next: (originalBook) => {
+        if (originalBook.status === BookStatus.Lent) {
+          this.bookService
+            .updateBook(
+              id,
+              {
+                ...originalBook,
+                status: BookStatus.Default,
+                other_name: undefined,
+                date: undefined,
+              },
+              false
+            )
+            .subscribe({
+              next: (result) => {
+                if (result) {
+                  this.getShelvedBooks();
+                }
+              },
+              error: (err) => {
+                this.loading.set(false);
+                this.isError = true;
+                this.errorMsg = `Could not return book: ${err.message}`;
+              },
+            });
         }
-      }
+      },
+      error: (err) => {
+        this.loading.set(false);
+        this.isError = true;
+        this.errorMsg = `Could not return book: ${err.message}`;
+      },
     });
   }
 
-  returnBook(id: number) {
-    const originalBook = this.bookService.getShelvedBookById(id);
-    if (!originalBook || originalBook.status !== BookStatus.Lent) return;
-    const returnedBook = this.bookService.updateShelvedBook({
-      ...originalBook,
-      status: BookStatus.Default,
-      otherName: undefined,
-      date: undefined,
+  deleteBook(id: string) {
+    this.loading.set(true);
+    this.bookService.deleteBook(id).subscribe({
+      next: (value) => {
+        if (value) {
+          this.getShelvedBooks();
+        }
+      },
+      error: (err) => {
+        this.loading.set(false);
+        this.isError = true;
+        this.errorMsg = `Could not remove book from list: ${err.message}`;
+      },
     });
-    if (returnedBook) {
-      const returnedIndex = this.findBookIndex(returnedBook);
-      if (returnedIndex >= 0) {
-        this.books[returnedIndex] = returnedBook;
-        this.bookFilter()?.filterBooks();
-      }
-    }
-  }
-
-  deleteBook(id: number) {
-    if (this.bookService.deleteShelvedBook(id)) {
-      this.books = this.bookService.getShelvedBooks();
-      this.bookFilter()?.filterBooks();
-    }
-  }
-
-  private findBookIndex(book: ShelvedBookWithData): number {
-    return this.books.findIndex((bk) => bk.id === book.id);
   }
 }

@@ -1,17 +1,7 @@
 import { NgClass } from '@angular/common';
 import { Component, output } from '@angular/core';
 import { FormControl, FormGroup, ReactiveFormsModule } from '@angular/forms';
-
-export interface BookshelfFilterValues {
-  hasCheck: boolean;
-  owner: string;
-  title: string;
-  author: string;
-  onShelf: boolean;
-  lent: boolean;
-  borrowed: boolean;
-  libraryBook: boolean;
-}
+import { BookFilterValues } from '../../../models/book-filter-values';
 
 @Component({
   selector: 'app-bookshelf-filter',
@@ -99,7 +89,7 @@ export class BookshelfFilter {
     borrowed: new FormControl<boolean>(false),
     libraryBook: new FormControl<boolean>(false),
   });
-  filter = output<BookshelfFilterValues>();
+  filter = output<BookFilterValues>();
 
   toggleForm() {
     this.formHidden = !this.formHidden;
@@ -114,16 +104,11 @@ export class BookshelfFilter {
     this.filter.emit(this.getFilterValues());
   }
 
-  private getFilterValues(): BookshelfFilterValues {
+  private getFilterValues(): BookFilterValues {
     return {
       owner: this.filterForm.value.owner ?? '',
       title: this.filterForm.value.title ?? '',
       author: this.filterForm.value.author ?? '',
-      hasCheck:
-        !!this.filterForm.value.onShelf ||
-        !!this.filterForm.value.lent ||
-        !!this.filterForm.value.borrowed ||
-        !!this.filterForm.value.libraryBook,
       onShelf: !!this.filterForm.value.onShelf,
       lent: !!this.filterForm.value.lent,
       borrowed: !!this.filterForm.value.borrowed,

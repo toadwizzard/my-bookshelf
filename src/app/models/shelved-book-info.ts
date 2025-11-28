@@ -1,15 +1,10 @@
-export enum BookStatus {
-  Default,
-  Lent,
-  Borrowed,
-  LibraryBorrowed,
-  Wishlist,
-}
+import { BookStatus } from '../helpers/book-status';
 
 export interface ShelvedBookInfo {
-  id: number;
-  bookKey: string;
-  otherName: string | undefined | null;
+  id: string;
   status: BookStatus;
-  date: Date | undefined | null;
+  author: string[];
+  title: string;
+  full_status: string;
+  owner_name: string;
 }

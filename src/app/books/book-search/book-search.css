@@ -37,5 +37,9 @@ button.search {
 .results-clearfix {
   margin-top: 1rem;
   border: 2px solid transparent;
-  height: 5rem;
+}
+
+p.error-msg {
+  margin-bottom: 0;
+  margin-top: 0.5rem;
 }
