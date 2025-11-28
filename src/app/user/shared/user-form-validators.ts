@@ -1,12 +1,4 @@
 import { AbstractControl, ValidationErrors, ValidatorFn } from '@angular/forms';
-import { UserService } from '../../services/user-service';
-
-export function uniqueUsernameValidator(userService: UserService): ValidatorFn {
-  return (control: AbstractControl): ValidationErrors | null => {
-    const unique = userService.checkUsernameUnique(control.value);
-    return unique ? null : { existingUsername: true };
-  };
-}
 
 export function matchingPasswordsValidator(): ValidatorFn {
   return (control: AbstractControl): ValidationErrors | null => {

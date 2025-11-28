@@ -9,25 +9,6 @@ import { LoginResponse } from '../models/login-response';
 import { FormError } from '../helpers/form-error';
 import { AUTH_ENABLED } from '../interceptors/auth-interceptor';
 
-interface UserInfoWithId extends UserInfo {
-  id: number;
-}
-
-const users: UserInfoWithId[] = [
-  {
-    id: 2,
-    username: 'admin',
-    email: 'q@q.com',
-    password: 'admin',
-  },
-  {
-    id: 1,
-    username: 'user',
-    email: 'w@w.com',
-    password: 'password',
-  },
-];
-
 @Injectable({
   providedIn: 'root',
 })
@@ -38,12 +19,6 @@ export class UserService {
 
   getUser(): Observable<UserInfo> {
     return this.http.get<UserInfo>(`${environment.apiUrl}/profile`);
-  }
-
-  checkUsernameUnique(username: string): boolean {
-    const userId = this.authService.getId();
-    const userWithUserName = users.find((user) => user.username === username);
-    return !userWithUserName || userWithUserName.id === userId;
   }
 
   register(user: UserInfo): Observable<boolean> {

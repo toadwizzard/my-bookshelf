@@ -1,5 +1,4 @@
 import { inject, Injectable } from '@angular/core';
-import { AuthService } from './auth-service';
 import { BookResultInfo } from '../models/book-result-info';
 import { catchError, map, Observable } from 'rxjs';
 import { HttpClient, HttpParams } from '@angular/common/http';
@@ -17,7 +16,6 @@ import { BookStatus } from '../helpers/book-status';
   providedIn: 'root',
 })
 export class BookService {
-  authService = inject(AuthService);
   http = inject(HttpClient);
 
   getShelvedBooks(

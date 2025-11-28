@@ -81,10 +81,7 @@ export class ProfileForm {
 
   userForm = new FormGroup(
     {
-      username: new FormControl<string>('', [
-        Validators.required,
-        // uniqueUsernameValidator(this.userService),
-      ]),
+      username: new FormControl<string>('', [Validators.required]),
       email: new FormControl<string>('', [
         Validators.email,
         Validators.required,

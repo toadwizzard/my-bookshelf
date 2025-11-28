@@ -8,10 +8,7 @@ import {
 import { UserService } from '../../services/user-service';
 import { AuthService } from '../../services/auth-service';
 import { Router } from '@angular/router';
-import {
-  matchingPasswordsValidator,
-  uniqueUsernameValidator,
-} from '../shared/user-form-validators';
+import { matchingPasswordsValidator } from '../shared/user-form-validators';
 import { isFormError } from '../../helpers/form-error';
 import { InputWithError } from '../../shared/input-with-error/input-with-error';
 
