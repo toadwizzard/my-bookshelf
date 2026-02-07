@@ -24,7 +24,6 @@ export class UserService {
   register(user: UserInfo): Observable<boolean> {
     return this.http
       .post(`${environment.apiUrl}/register`, user, {
-        responseType: 'text',
         context: new HttpContext().set(AUTH_ENABLED, false),
       })
       .pipe(
@@ -36,12 +35,12 @@ export class UserService {
               err.error?.errors?.map((e: { path: string; msg: string }) => ({
                 field: e.path,
                 message: e.msg,
-              })) ?? []
+              })) ?? [],
             );
             throw error;
           }
           throw err;
-        })
+        }),
       );
   }
 
@@ -61,12 +60,12 @@ export class UserService {
         catchError((err) => {
           if (err.status === 400) throw new Error(err.error?.message);
           throw err;
-        })
+        }),
       );
   }
 
   updateUser(
-    user: UserInfo & { newPassword?: string; oldPassword: string }
+    user: UserInfo & { newPassword?: string; oldPassword: string },
   ): Observable<UserInfo> {
     return this.http
       .patch<UserInfo>(`${environment.apiUrl}/profile`, user)
@@ -78,12 +77,12 @@ export class UserService {
               err.error?.errors?.map((e: { path: string; msg: string }) => ({
                 field: e.path === 'newPassword' ? 'password' : e.path,
                 message: e.msg,
-              })) ?? []
+              })) ?? [],
             );
             throw error;
           }
           throw err;
-        })
+        }),
       );
   }
 
@@ -93,7 +92,7 @@ export class UserService {
         next: (value) => {
           this.authService.deleteToken();
         },
-      })
+      }),
     );
   }
 }

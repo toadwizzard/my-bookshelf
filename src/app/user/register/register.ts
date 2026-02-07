@@ -47,12 +47,13 @@ import { InputWithError } from '../../shared/input-with-error/input-with-error';
           type="password"
           [input]="registerForm.controls.passwordConfirm"
         />
-        @if(registerForm.hasError('formError')){
-        <p class="error-msg">
-          <span class="material-icons">error</span> {{ errorMsg }}
-        </p>
-        } @if (loading) {
-        <p class="loading">Loading...</p>
+        @if (registerForm.hasError('formError')) {
+          <p class="error-msg">
+            <span class="material-icons">error</span> {{ errorMsg }}
+          </p>
+        }
+        @if (loading) {
+          <p class="loading">Loading...</p>
         }
         <button
           type="submit"
@@ -86,7 +87,7 @@ export class Register {
       password: new FormControl<string>('', [Validators.required]),
       passwordConfirm: new FormControl<string>('', [Validators.required]),
     },
-    { validators: matchingPasswordsValidator() }
+    { validators: matchingPasswordsValidator() },
   );
 
   submit() {
